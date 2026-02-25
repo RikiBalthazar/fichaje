@@ -1,0 +1,37 @@
+{
+  "name": "sistema-fichaje",
+  "version": "1.0.0",
+  "description": "Sistema completo de control de partes de horas - React + Node.js + SQLite",
+  "private": true,
+  "scripts": {
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "test": "npm run test:centesimal",
+    "test:centesimal": "cd client && npx ts-node src/utils/time.test.ts",
+    "lint": "cd client && npm run lint",
+    "start": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+  },
+  "keywords": [
+    "time-tracking",
+    "time-sheets",
+    "proyecto-management",
+    "react",
+    "node.js",
+    "sqlite",
+    "speech-to-text"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
