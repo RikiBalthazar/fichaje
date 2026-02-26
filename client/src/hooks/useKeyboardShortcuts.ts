@@ -21,26 +21,48 @@ export const useKeyboardShortcuts = ({
 }: UseKeyboardShortcutsProps) => {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      console.log('⌨️ Tecla presionada:', {
+        code: event.code,
+        key: event.key,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        ctrlKey: event.ctrlKey,
+        isAnyModalOpen,
+        activeElement: document.activeElement?.tagName
+      });
+
       // No ejecutar atajos si hay modal abierto
-      if (isAnyModalOpen) return;
+      if (isAnyModalOpen) {
+        console.log('⚠️ Modal abierto, atajos deshabilitados');
+        return;
+      }
 
       // Alt + 1-9: Iniciar proyecto rápido
       if (event.altKey && event.code >= 'Digit1' && event.code <= 'Digit9') {
         event.preventDefault();
         const index = parseInt(event.code.replace('Digit', '')) - 1;
+        console.log(`✅ Alt + ${index + 1} detectado. ProjectIds:[${projectIds.length}], Index:${index}, Has project: ${!!projectIds[index]}`);
         if (projectIds[index]) {
           onPlay(projectIds[index]);
-          console.log(`🎮 Atajo: Iniciando proyecto ${index + 1}`);
+          console.log(`🎮 Atajo: Iniciando proyecto ${index + 1} (ID: ${projectIds[index]})`);
+        } else {
+          console.warn(`❌ No hay proyecto en índice ${index}`);
         }
         return;
       }
 
       // Espacio: Play/Pause del proyecto activo
-      if (event.code === 'Space' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-        event.preventDefault();
-        onPause(); // Si hay uno activo lo pausa, si no, se ignora
-        console.log('🎮 Atajo: Play/Pause');
-        return;
+      if (event.code === 'Space') {
+        const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+        console.log(`Space detectado. isInput: ${isInput}`);
+        if (!isInput) {
+          event.preventDefault();
+          onPause();
+          console.log('🎮 Atajo: Play/Pause (Space)');
+          return;
+        } else {
+          console.log('⏭️ Space ignorado (usuario escribiendo)');
+        }
       }
 
       // Alt + V: Grabar descripción
@@ -53,6 +75,7 @@ export const useKeyboardShortcuts = ({
 
       // Esc: Detener timer activo
       if (event.code === 'Escape') {
+        event.preventDefault();
         onStop();
         console.log('🎮 Atajo: Detener timer (Esc)');
         return;
@@ -70,9 +93,13 @@ export const useKeyboardShortcuts = ({
   );
 
   useEffect(() => {
+    console.log('🚀 useKeyboardShortcuts montado. ProjectIds:', projectIds.length, 'isAnyModalOpen:', isAnyModalOpen);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    return () => {
+      console.log('🛑 useKeyboardShortcuts desmontado');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown, projectIds, isAnyModalOpen]);
 };
 
 // Ayuda de atajos para mostrar en la app

@@ -191,6 +191,7 @@ function App() {
   };
 
   const handlePlayProject = async (projectId: string) => {
+    console.log('▶️ handlePlayProject called with projectId:', projectId);
     try {
       const wasPaused = Boolean(pausedTimers[projectId]);
       await start(projectId);
@@ -202,8 +203,10 @@ function App() {
   };
 
   const handleVoiceRecord = () => {
+    console.log('🎤 handleVoiceRecord called');
     const activeProjectId = timerState?.projectId;
     if (!activeProjectId) {
+      console.log('⚠️ handleVoiceRecord: No active project');
       setToastMessage({
         id: Date.now().toString(),
         message: '⚠️ No hay proyecto activo',
@@ -227,6 +230,7 @@ function App() {
   };
 
   const handlePauseProject = async () => {
+    console.log('⏸️ handlePauseProject called');
     try {
       await pause();
       showToast('Cronómetro pausado', 'warning');
@@ -245,7 +249,11 @@ function App() {
   };
 
   const handleStopProject = async () => {
-    if (!timerState.projectId) return;
+    console.log('⏹️ handleStopProject called. timerState.projectId:', timerState.projectId);
+    if (!timerState.projectId) {
+      console.log('⚠️ handleStopProject: No active project');
+      return;
+    }
     const description = descriptionDrafts[timerState.projectId] || '';
 
     try {
