@@ -1,9 +1,8 @@
-import { useState, KeyboardEvent } from 'react';
+import { useState, KeyboardEvent, useEffect } from 'react';
 
 interface TagInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
-  suggestions?: string[];
   placeholder?: string;
 }
 
@@ -23,15 +22,46 @@ const DEFAULT_COLOR = 'bg-gray-100 text-gray-800 border-gray-300';
 export const TagInput: React.FC<TagInputProps> = ({
   tags,
   onChange,
-  suggestions = Object.keys(TAG_COLORS),
   placeholder = 'Agregar tag...'
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [userTags, setUserTags] = useState<Array<{name: string; color: string}>>([]);
+
+  // Cargar tags del usuario desde la API
+  useEffect(() => {
+    const loadUserTags = async () => {
+      try {
+        const response = await fetch('/api/tags', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserTags(data);
+        }
+      } catch (error) {
+        console.error('Error loading user tags:', error);
+      }
+    };
+    loadUserTags();
+  }, []);
 
   const getTagColor = (tag: string) => {
+    // Primero buscar en tags del usuario
+    const userTag = userTags.find(t => t.name === tag);
+    if (userTag) return userTag.color;
+    
+    // Si no, usar el color predefinido
     return TAG_COLORS[tag] || DEFAULT_COLOR;
   };
+
+  // Combinar tags predefinidos con tags del usuario
+  const allSuggestions = [
+    ...Object.keys(TAG_COLORS),
+    ...userTags.map(t => t.name).filter(name => !TAG_COLORS[name])
+  ];
 
   const addTag = (tag: string) => {
     const trimmed = tag.trim();
@@ -55,7 +85,7 @@ export const TagInput: React.FC<TagInputProps> = ({
     }
   };
 
-  const filteredSuggestions = suggestions.filter(
+  const filteredSuggestions = allSuggestions.filter(
     s => !tags.includes(s) && s.toLowerCase().includes(inputValue.toLowerCase())
   );
 

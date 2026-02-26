@@ -9,6 +9,7 @@ import exportRouter from './routes/export.js';
 import templatesRouter from './routes/templates.js';
 import authRouter from './routes/auth.js';
 import timerRouter from './routes/timer.js';
+import tagsRouter from './routes/tags.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.use('/api/time-entries', requireAuth, timeEntriesRouter);
 app.use('/api/export', requireAuth, exportRouter);
 app.use('/api/templates', requireAuth, templatesRouter);
 app.use('/api/timer', requireAuth, timerRouter);
+app.use('/api/tags', requireAuth, tagsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

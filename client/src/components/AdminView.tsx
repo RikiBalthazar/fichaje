@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { TimeEntry, Project } from '../types';
 import { formatDate } from '../utils/time';
 import { Modal } from './ui';
+import { TagManagement } from './TagManagement';
 
 interface AdminViewProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AdminViewProps {
   projects: Project[];
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entryId: string) => void;
+  onProjectsChange?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
@@ -19,7 +21,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
   projects,
   onEdit,
   onDelete,
+  onProjectsChange,
 }) => {
+  const [activeTab, setActiveTab] = useState<'entries' | 'tags'>('entries');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<TimeEntry>>({});
   const [filterProjectId, setFilterProjectId] = useState<string>('');
@@ -65,7 +69,34 @@ export const AdminView: React.FC<AdminViewProps> = ({
   );
 
   return (
-    <Modal isOpen={isOpen} title="Administración de registros" onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} title="Configuración" onClose={onClose} size="xl">
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-6">
+        <button
+          onClick={() => setActiveTab('entries')}
+          className={`px-6 py-3 font-semibold transition-colors ${
+            activeTab === 'entries'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          📋 Registros
+        </button>
+        <button
+          onClick={() => setActiveTab('tags')}
+          className={`px-6 py-3 font-semibold transition-colors ${
+            activeTab === 'tags'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          🏷️ Tags
+        </button>
+      </div>
+
+      {/* Contenido según tab activa */}
+      {activeTab === 'entries' ? (
+        <>
       {/* Filtros */}
       <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <h3 className="font-semibold text-gray-700 mb-3">Filtros</h3>
@@ -222,6 +253,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
           </tbody>
         </table>
       </div>
+        </>
+      ) : (
+        <TagManagement onTagsChange={() => onProjectsChange?.()} />
+      )}
 
       <div className="mt-6 pt-4 border-t border-gray-200">
         <button

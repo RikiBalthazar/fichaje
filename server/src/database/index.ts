@@ -152,6 +152,21 @@ export async function initDb(): Promise<Database> {
     // Column already exists
   }
 
+  // Crear tabla user_tags para tags personalizados
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS user_tags (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_user_tags_user_id
+      ON user_tags(user_id);
+  `);
+
   console.log('✅ Database initialized');
   return db;
 }

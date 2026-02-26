@@ -861,6 +861,9 @@ function App() {
             showToast('Error al eliminar registro', 'error');
           }
         }}
+        onProjectsChange={async () => {
+          await loadProjects();
+        }}
       />
 
       <Modal
