@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -13,6 +13,7 @@ import { DashboardModal } from './components/DashboardModal';
 import { AuthView } from './components/AuthView';
 import { AccountModal } from './components/AccountModal';
 import { KeyboardHelp } from './components/KeyboardHelp';
+import { SearchBar } from './components/SearchBar';
 import { Toast as ToastComponent, ToastMessage } from './components/Toast';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
 
@@ -56,6 +57,9 @@ function App() {
   // Drag and drop state
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Timer state
   const { timerState, pausedTimers, start, pause, stop } = useTimer(Boolean(user));
@@ -166,6 +170,24 @@ function App() {
       console.error('Error toggling favorite:', error);
       showToast('Error al actualizar favorito', 'error');
     }
+  };
+
+  // Search and filter projects
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return projects;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return projects.filter(project => 
+      project.name.toLowerCase().includes(query) ||
+      project.description.toLowerCase().includes(query)
+    );
+  }, [projects, searchQuery]);
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   // Drag and Drop handlers
@@ -423,6 +445,13 @@ function App() {
     onStop: handleStopProject,
     onVoiceRecord: handleVoiceRecord,
     onToggleHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
+    onFocusSearch: () => {
+      // Focus en el input de búsqueda
+      const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.focus();
+      }
+    },
     projectIds: projects.map(p => p.id),
     isAnyModalOpen: showProjectForm || showAdminView || showExportView || showProjectManager || showSettings || showDashboard || showAccount || showKeyboardHelp || deleteProjectId !== null
   });
@@ -492,14 +521,19 @@ function App() {
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div>
+          <div className="flex justify-between items-center gap-4">
+            <div className="flex-shrink-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">⏱️ Control de Partes</h1>
               <p className="text-gray-600 mt-0.5 text-sm hidden sm:block">Sistema moderno de seguimiento de horas</p>
             </div>
+
+            {/* Search Bar */}
+            <div className="hidden lg:block flex-1 max-w-md">
+              <SearchBar onSearch={handleSearch} />
+            </div>
             
             {/* Desktop Menu */}
-            <div className="hidden md:flex gap-2 items-center">
+            <div className="hidden md:flex gap-2 items-center flex-shrink-0">
               <button
                 onClick={handleOpenProjectForm}
                 className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition text-sm"
@@ -668,6 +702,11 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Search Bar for Mobile */}
+        <div className="lg:hidden mb-6">
+          <SearchBar onSearch={handleSearch} />
+        </div>
+
         {projects.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-xl text-gray-600 mb-6">No hay proyectos creados</p>
@@ -678,9 +717,20 @@ function App() {
               Crear primer proyecto
             </button>
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-xl text-gray-600 mb-2">🔍 No se encontraron proyectos</p>
+            <p className="text-sm text-gray-500">Intenta con otra búsqueda</p>
+            <button
+              onClick={() => handleSearch('')}
+              className="mt-4 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
+            >
+              Limpiar búsqueda
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortProjects(projects).map((project) => {
+            {sortProjects(filteredProjects).map((project) => {
               const todayMinutesByProject = getTodayMinutesByProject();
               return (
                 <ProjectCard

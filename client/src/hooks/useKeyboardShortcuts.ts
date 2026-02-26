@@ -6,6 +6,7 @@ interface UseKeyboardShortcutsProps {
   onStop: () => void;
   onVoiceRecord: () => void;
   onToggleHelp?: () => void;
+  onFocusSearch?: () => void;
   projectIds: string[];
   isAnyModalOpen: boolean;
 }
@@ -16,6 +17,7 @@ export const useKeyboardShortcuts = ({
   onStop,
   onVoiceRecord,
   onToggleHelp,
+  onFocusSearch,
   projectIds,
   isAnyModalOpen
 }: UseKeyboardShortcutsProps) => {
@@ -34,6 +36,14 @@ export const useKeyboardShortcuts = ({
       // No ejecutar atajos si hay modal abierto
       if (isAnyModalOpen) {
         console.log('⚠️ Modal abierto, atajos deshabilitados');
+        return;
+      }
+
+      // Ctrl + K: Focus en búsqueda
+      if (event.ctrlKey && event.code === 'KeyK' && onFocusSearch) {
+        event.preventDefault();
+        onFocusSearch();
+        console.log('🎮 Atajo: Focus en búsqueda (Ctrl+K)');
         return;
       }
 
@@ -89,7 +99,7 @@ export const useKeyboardShortcuts = ({
         return;
       }
     },
-    [onPlay, onPause, onStop, onVoiceRecord, onToggleHelp, projectIds, isAnyModalOpen]
+    [onPlay, onPause, onStop, onVoiceRecord, onToggleHelp, onFocusSearch, projectIds, isAnyModalOpen]
   );
 
   useEffect(() => {
@@ -108,5 +118,6 @@ export const KEYBOARD_SHORTCUTS = [
   { shortcut: 'Espacio', description: 'Play/Pause del proyecto activo' },
   { shortcut: 'Alt + V', description: 'Grabar descripción sin abrir modal' },
   { shortcut: 'Esc', description: 'Detener timer activo' },
+  { shortcut: 'Ctrl + K', description: 'Buscar proyectos' },
   { shortcut: '?', description: 'Mostrar esta ayuda' }
 ];
