@@ -174,37 +174,41 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
         </div>
 
-        {/* Time Display */}
-        <div className="mb-3 p-2 bg-gray-100 rounded">
-          <div className="text-xs text-gray-600 mb-0.5">Tiempo acumulado</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-mono font-bold text-gray-800">
-              {formatSecondsHHMM(totalMinutes * 60)}
-            </span>
-            <span className="text-xs text-blue-600">
-              ({totalCentesimal}h)
-            </span>
+        {/* Time Display - Lado a lado con sesión activa/pausada */}
+        <div className="mb-2 flex gap-2">
+          {/* Tiempo acumulado */}
+          <div className="flex-1 p-2 bg-gray-100 rounded">
+            <div className="text-xs text-gray-600 mb-0.5">Tiempo acumulado</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-mono font-bold text-gray-800">
+                {formatSecondsHHMM(totalMinutes * 60)}
+              </span>
+              <span className="text-xs text-blue-600">
+                ({totalCentesimal}h)
+              </span>
+            </div>
           </div>
+
+          {/* Sesión activa */}
+          {isActive && (
+            <div className="flex-1 p-2 bg-green-50 border border-green-200 rounded">
+              <div className="text-xs text-green-600 font-semibold mb-0.5">SESIÓN ACTIVA</div>
+              <div className="text-sm font-mono font-bold text-green-700">
+                {formatSeconds(elapsedSeconds)}
+              </div>
+            </div>
+          )}
+
+          {/* Sesión pausada */}
+          {isPaused && (
+            <div className="flex-1 p-2 bg-yellow-50 border border-yellow-200 rounded">
+              <div className="text-xs text-yellow-700 font-semibold mb-0.5">SESIÓN EN PAUSA</div>
+              <div className="text-sm font-mono font-bold text-yellow-800">
+                {formatSeconds(pausedElapsedSeconds)}
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Current Session */}
-        {isActive && (
-          <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded">
-            <div className="text-xs text-green-600 font-semibold mb-0.5">SESIÓN ACTIVA</div>
-            <div className="text-sm font-mono font-bold text-green-700">
-              {formatSeconds(elapsedSeconds)}
-            </div>
-          </div>
-        )}
-
-        {isPaused && (
-          <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-            <div className="text-xs text-yellow-700 font-semibold mb-0.5">SESIÓN EN PAUSA</div>
-            <div className="text-sm font-mono font-bold text-yellow-800">
-              {formatSeconds(pausedElapsedSeconds)}
-            </div>
-          </div>
-        )}
 
         {/* Buttons */}
         <div className="flex flex-col gap-1.5 mt-auto">
