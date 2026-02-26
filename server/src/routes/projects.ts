@@ -7,7 +7,8 @@ import {
   updateProject,
   deleteProject,
   updateProjectsOrder,
-  toggleProjectActive
+  toggleProjectActive,
+  toggleProjectFavorite
 } from '../controllers/projectsController.js';
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);
 router.post('/order', updateProjectsOrder);
 router.patch('/:id/toggle', toggleProjectActive);
+router.patch('/:id/favorite', toggleProjectFavorite);
 
 export default router;

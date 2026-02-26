@@ -115,6 +115,12 @@ export async function startTimer(req: Request, res: Response): Promise<void> {
       );
     }
 
+    // Actualizar last_used_at del proyecto cuando se inicia el timer
+    await db.run(
+      'UPDATE projects SET last_used_at = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [timestamp, timestamp, projectId, userId]
+    );
+
     const state = await buildTimerState(userId);
     res.json(state);
   } catch (error) {

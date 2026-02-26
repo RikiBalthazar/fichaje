@@ -6,6 +6,8 @@ export interface Project {
   total_minutes: number;
   is_active: number;
   order_index: number;
+  is_favorite: number;
+  last_used_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -5,8 +5,8 @@
 ---
 
 ## ✅ PROGRESO GENERAL
-- ✅ Sprint 1: 100% Completo (1/1 features)
-- 🔄 Sprint 2: En progreso
+- 🔄 Sprint 1: 50% Completo (2/4 features)
+- ⏸️ Sprint 2: Pausado (trabajando en Sprint 1)
 - ❌ Sprint 3: No iniciado
 - ❌ Sprint 4: No iniciado
 
@@ -41,22 +41,28 @@
 
 ---
 
-#### 2️⃣ **Proyectos Favoritos/Recientes** - ❌ NO INICIADO
+#### 2️⃣ **Proyectos Favoritos/Recientes** - ✅ COMPLETADO
 **Descripción:** Ordenar proyectos por favoritos y acceso rápido
-- [ ] Icono de pin (⭐) en cada tarjeta para marcar favoritos
-- [ ] Actualizarse en tiempo real en el cliente
-- [ ] Guardar estado de favoritos en BD (columna `is_favorite` en projects)
-- [ ] Ordenar por: Favoritos → Recientes → Resto
-- [ ] Badge con horas trabajadas hoy
-- [ ] Indicador de "activo hoy" (diferente color si usaron hoy)
+- [x] Icono de pin (⭐) en cada tarjeta para marcar favoritos
+- [x] Actualizarse en tiempo real en el cliente
+- [x] Guardar estado de favoritos en BD (columna `is_favorite` en projects)
+- [x] Ordenar por: Favoritos → Recientes → Resto
+- [x] Badge con horas trabajadas hoy
+- [x] Indicador de "activo hoy" (diferente color si usaron hoy)
 
 **Notas técnicas:**
-- Agregar columna `is_favorite BOOLEAN DEFAULT 0` a tabla projects
-- Crear endpoint PATCH /api/projects/:id/favorite
-- Agregar timestamp `last_used_at` para "recientes"
-- Ordenar en el hook useProjects
+- ✅ Agregada columna `is_favorite INTEGER DEFAULT 0` a tabla projects
+- ✅ Agregada columna `last_used_at TEXT` para tracking de uso reciente
+- ✅ Creado endpoint PATCH /api/projects/:id/favorite
+- ✅ Timer actualiza `last_used_at` cuando se inicia un proyecto
+- ✅ Ordenamiento: Favoritos → Recientes (por lastUsedAt) → Alfabético
+- ✅ Badge "🕐 2h 30m hoy" muestra horas trabajadas hoy
+- ✅ Indicador "● Activo hoy" si lastUsedAt es hoy
+- ✅ Estrella llena (⭐) para favoritos, vacía (☆) para no favoritos
 
-**Dependencias:** Base de datos
+**Dependencias:** Base de datos - ✅ COMPLETADO
+
+**Fecha de completación:** 26 de Febrero de 2026
 
 ---
 
@@ -101,7 +107,7 @@
 ### 📊 **SPRINT 2: ANALÍTICA Y ALERTAS** (Semana 3-4)
 **Objetivo:** Visualizar datos y alertar sobre límites de tiempo
 
-#### 5️⃣ **Notificaciones y Alertas** - 🟡 EN PROGRESO
+#### 5️⃣ **Notificaciones y Alertas** - ⏸️ PAUSADO (implementación básica completa)
 **Descripción:** Alertar cuando se supera límite de horas
 - [ ] Push notification cuando pases de 8:30 horas en un día
   - [ ] Solicitar permiso al usuario

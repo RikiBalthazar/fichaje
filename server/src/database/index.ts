@@ -131,6 +131,20 @@ export async function initDb(): Promise<Database> {
     // Column already exists
   }
 
+  // Migration: agregar columna is_favorite para marcar proyectos favoritos
+  try {
+    await db.exec('ALTER TABLE projects ADD COLUMN is_favorite INTEGER DEFAULT 0');
+  } catch (e) {
+    // Column already exists
+  }
+
+  // Migration: agregar columna last_used_at para rastrear proyectos recientes
+  try {
+    await db.exec('ALTER TABLE projects ADD COLUMN last_used_at TEXT');
+  } catch (e) {
+    // Column already exists
+  }
+
   console.log('✅ Database initialized');
   return db;
 }

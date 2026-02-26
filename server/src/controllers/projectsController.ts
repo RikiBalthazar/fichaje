@@ -30,6 +30,8 @@ export async function getAllProjects(req: Request, res: Response): Promise<void>
           totalMinutes,
           isActive: project.is_active,
           orderIndex: project.order_index,
+          isFavorite: project.is_favorite ?? 0,
+          lastUsedAt: project.last_used_at ?? null,
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -68,6 +70,8 @@ export async function getAllProjectsWithInactive(req: Request, res: Response): P
           totalMinutes,
           isActive: project.is_active,
           orderIndex: project.order_index,
+          isFavorite: project.is_favorite ?? 0,
+          lastUsedAt: project.last_used_at ?? null,
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -293,11 +297,68 @@ export async function toggleProjectActive(req: Request, res: Response): Promise<
       totalMinutes,
       isActive: updated.is_active,
       orderIndex: updated.order_index,
+      isFavorite: updated.is_favorite ?? 0,
+      lastUsedAt: updated.last_used_at ?? null,
       createdAt: updated.created_at,
       updatedAt: updated.updated_at
     });
   } catch (error) {
     console.error('Error toggling project active:', error);
     res.status(500).json({ error: 'Error al cambiar estado del proyecto' });
+  }
+}
+
+/**
+ * Toggle is_favorite de un proyecto
+ */
+export async function toggleProjectFavorite(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
+    const db = getDb();
+
+    const project = await db.get<any>(
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    if (!project) {
+      res.status(404).json({ error: 'Proyecto no encontrado' });
+      return;
+    }
+
+    // Toggle is_favorite
+    const newIsFavorite = (project.is_favorite ?? 0) === 1 ? 0 : 1;
+    const updatedAt = new Date().toISOString();
+
+    await db.run(
+      'UPDATE projects SET is_favorite = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [newIsFavorite, updatedAt, id, userId]
+    );
+
+    const updated = await db.get<any>(
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    const entries = await db.all(
+      'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+      [userId, id]
+    );
+    const totalMinutes = calculateTotalMinutes(entries);
+
+    res.json({
+      ...updated,
+      totalMinutes,
+      isActive: updated.is_active,
+      orderIndex: updated.order_index,
+      isFavorite: updated.is_favorite ?? 0,
+      lastUsedAt: updated.last_used_at ?? null,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at
+    });
+  } catch (error) {
+    console.error('Error toggling project favorite:', error);
+    res.status(500).json({ error: 'Error al cambiar favorito del proyecto' });
   }
 }
