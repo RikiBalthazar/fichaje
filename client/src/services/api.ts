@@ -52,13 +52,15 @@ export const projectsAPI = {
     return data;
   },
 
-  create: async (name: string, description: string): Promise<Project> => {
-    const { data } = await api.post('/projects', { name, description });
+  create: async (name: string, description: string, tags: string[] = []): Promise<Project> => {
+    const { data } = await api.post('/projects', { name, description, tags });
     return data;
   },
 
-  update: async (id: string, name: string, description: string): Promise<Project> => {
+  update: async (id: string, name: string, description: string, tags: string[] = []): Promise<Project> => {
     const { data } = await api.put(`/projects/${id}`, { name, description });
+    // Update tags separately  
+    await api.patch(`/projects/${id}/tags`, { tags });
     return data;
   },
 
@@ -82,6 +84,11 @@ export const projectsAPI = {
 
   toggleFavorite: async (id: string): Promise<Project> => {
     const { data } = await api.patch(`/projects/${id}/favorite`);
+    return data;
+  },
+
+  updateTags: async (id: string, tags: string[]): Promise<Project> => {
+    const { data } = await api.patch(`/projects/${id}/tags`, { tags });
     return data;
   }
 };

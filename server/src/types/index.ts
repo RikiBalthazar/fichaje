@@ -7,8 +7,7 @@ export interface Project {
   is_active: number;
   order_index: number;
   is_favorite: number;
-  last_used_at: string | null;
-  created_at: string;
+  last_used_at: string | null;  tags: string; // JSON string array  created_at: string;
   updated_at: string;
 }
 
@@ -27,11 +26,13 @@ export interface TimeEntry {
 export interface CreateProjectRequest {
   name: string;
   description?: string;
+  tags?: string[];
 }
 
 export interface UpdateProjectRequest {
   name?: string;
   description?: string;
+  tags?: string[];
 }
 
 export interface CreateTimeEntryRequest {

@@ -13,9 +13,9 @@ import { DashboardModal } from './components/DashboardModal';
 import { AuthView } from './components/AuthView';
 import { AccountModal } from './components/AccountModal';
 import { KeyboardHelp } from './components/KeyboardHelp';
-import { SearchBar } from './components/SearchBar';
 import { Toast as ToastComponent, ToastMessage } from './components/Toast';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
+import { TAG_COLORS, DEFAULT_COLOR } from './components/TagInput';
 
 function App() {
   // Estado de proyectos
@@ -60,6 +60,7 @@ function App() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   // Timer state
   const { timerState, pausedTimers, start, pause, stop } = useTimer(Boolean(user));
@@ -175,16 +176,45 @@ function App() {
 
   // Search and filter projects
   const filteredProjects = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return projects;
+    let filtered = projects;
+
+    // Filter by search query (mantener funcionalidad interna)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(project => 
+        project.name.toLowerCase().includes(query) ||
+        project.description.toLowerCase().includes(query)
+      );
     }
 
-    const query = searchQuery.toLowerCase();
-    return projects.filter(project => 
-      project.name.toLowerCase().includes(query) ||
-      project.description.toLowerCase().includes(query)
-    );
-  }, [projects, searchQuery]);
+    // Filter by selected tag
+    if (selectedTag) {
+      filtered = filtered.filter(project => {
+        try {
+          const projectTags = JSON.parse(project.tags || '[]');
+          return projectTags.includes(selectedTag);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+
+    return filtered;
+  }, [projects, searchQuery, selectedTag]);
+
+  // Get all unique tags from projects
+  const allTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    projects.forEach(project => {
+      try {
+        const projectTags = JSON.parse(project.tags || '[]');
+        projectTags.forEach((tag: string) => tagsSet.add(tag));
+      } catch (e) {
+        // Ignore invalid JSON
+      }
+    });
+    return Array.from(tagsSet).sort();
+  }, [projects]);
 
   // Handle search
   const handleSearch = (query: string) => {
@@ -369,9 +399,9 @@ function App() {
     }
   };
 
-  const handleCreateProject = async (name: string, description: string) => {
+  const handleCreateProject = async (name: string, description: string, tags: string[] = []) => {
     try {
-      await projectsAPI.create(name, description);
+      await projectsAPI.create(name, description, tags);
       await loadProjects();
       setShowProjectForm(false);
       showToast('Proyecto creado correctamente', 'success');
@@ -380,10 +410,10 @@ function App() {
     }
   };
 
-  const handleUpdateProject = async (name: string, description: string) => {
+  const handleUpdateProject = async (name: string, description: string, tags: string[] = []) => {
     if (!editingProject) return;
     try {
-      await projectsAPI.update(editingProject.id, name, description);
+      await projectsAPI.update(editingProject.id, name, description, tags);
       await loadProjects();
       setEditingProject(undefined);
       setShowProjectForm(false);
@@ -526,11 +556,6 @@ function App() {
             <div className="flex-shrink-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">⏱️ Control de Partes</h1>
               <p className="text-gray-600 mt-0.5 text-sm hidden sm:block">Sistema moderno de seguimiento de horas</p>
-            </div>
-
-            {/* Search Bar */}
-            <div className="hidden lg:block flex-1 max-w-md">
-              <SearchBar onSearch={handleSearch} />
             </div>
             
             {/* Desktop Menu */}
@@ -703,10 +728,40 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Search Bar for Mobile */}
-        <div className="lg:hidden mb-6">
-          <SearchBar onSearch={handleSearch} />
-        </div>
+        {/* Tag Filter Buttons */}
+        {allTags.length > 0 && (
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedTag(null)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  !selectedTag
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Todos los proyectos
+              </button>
+              {allTags.map((tag) => {
+                const colorClass = TAG_COLORS[tag] || DEFAULT_COLOR;
+                const isSelected = selectedTag === tag;
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTag(tag)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                      isSelected
+                        ? colorClass + ' ring-2 ring-offset-2 ring-blue-500'
+                        : colorClass + ' hover:scale-105'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {projects.length === 0 ? (
           <div className="text-center py-16">
@@ -721,12 +776,17 @@ function App() {
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-xl text-gray-600 mb-2">🔍 No se encontraron proyectos</p>
-            <p className="text-sm text-gray-500">Intenta con otra búsqueda</p>
+            <p className="text-sm text-gray-500">
+              {selectedTag ? `No hay proyectos con el tag "${selectedTag}"` : 'Intenta con otro filtro'}
+            </p>
             <button
-              onClick={() => handleSearch('')}
+              onClick={() => {
+                setSelectedTag(null);
+                handleSearch('');
+              }}
               className="mt-4 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
             >
-              Limpiar búsqueda
+              Limpiar filtros
             </button>
           </div>
         ) : (

@@ -145,6 +145,13 @@ export async function initDb(): Promise<Database> {
     // Column already exists
   }
 
+  // Migration: agregar columna tags para clasificar proyectos con etiquetas
+  try {
+    await db.exec('ALTER TABLE projects ADD COLUMN tags TEXT DEFAULT "[]"');
+  } catch (e) {
+    // Column already exists
+  }
+
   console.log('✅ Database initialized');
   return db;
 }

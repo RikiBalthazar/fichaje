@@ -8,7 +8,8 @@ import {
   deleteProject,
   updateProjectsOrder,
   toggleProjectActive,
-  toggleProjectFavorite
+  toggleProjectFavorite,
+  updateProjectTags
 } from '../controllers/projectsController.js';
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.delete('/:id', deleteProject);
 router.post('/order', updateProjectsOrder);
 router.patch('/:id/toggle', toggleProjectActive);
 router.patch('/:id/favorite', toggleProjectFavorite);
+router.patch('/:id/tags', updateProjectTags);
 
 export default router;

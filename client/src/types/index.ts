@@ -8,6 +8,7 @@ export interface Project {
   orderIndex: number;
   isFavorite: number;
   lastUsedAt: string | null;
+  tags: string; // JSON string array
 }
 
 export interface TimeEntry {

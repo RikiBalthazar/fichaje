@@ -32,6 +32,7 @@ export async function getAllProjects(req: Request, res: Response): Promise<void>
           orderIndex: project.order_index,
           isFavorite: project.is_favorite ?? 0,
           lastUsedAt: project.last_used_at ?? null,
+          tags: project.tags ?? '[]',
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -72,6 +73,7 @@ export async function getAllProjectsWithInactive(req: Request, res: Response): P
           orderIndex: project.order_index,
           isFavorite: project.is_favorite ?? 0,
           lastUsedAt: project.last_used_at ?? null,
+          tags: project.tags ?? '[]',
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -121,7 +123,7 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
  */
 export async function createProject(req: Request, res: Response): Promise<void> {
   try {
-    const { name, description = '' } = req.body as CreateProjectRequest;
+    const { name, description = '', tags = [] } = req.body as CreateProjectRequest;
     const userId = (req as AuthenticatedRequest).user.id;
 
     if (!name || !name.trim()) {
@@ -132,10 +134,11 @@ export async function createProject(req: Request, res: Response): Promise<void> 
     const id = uuidv4();
     const now = new Date().toISOString();
     const db = getDb();
+    const tagsJSON = JSON.stringify(tags);
 
     await db.run(
-      'INSERT INTO projects (id, user_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, userId, name.trim(), description.trim(), now, now]
+      'INSERT INTO projects (id, user_id, name, description, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, userId, name.trim(), description.trim(), tagsJSON, now, now]
     );
 
     const project = await db.get<Project>(
@@ -143,7 +146,7 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       [id, userId]
     );
 
-    res.status(201).json({ ...project, totalMinutes: 0 });
+    res.status(201).json({ ...project, totalMinutes: 0, tags: project?.tags ?? '[]' });
   } catch (error) {
     console.error('Error creating project:', error);
     res.status(500).json({ error: 'Error al crear proyecto' });
@@ -354,11 +357,68 @@ export async function toggleProjectFavorite(req: Request, res: Response): Promis
       orderIndex: updated.order_index,
       isFavorite: updated.is_favorite ?? 0,
       lastUsedAt: updated.last_used_at ?? null,
+      tags: updated.tags ?? '[]',
       createdAt: updated.created_at,
       updatedAt: updated.updated_at
     });
   } catch (error) {
     console.error('Error toggling project favorite:', error);
     res.status(500).json({ error: 'Error al cambiar favorito del proyecto' });
+  }
+}
+
+/**
+ * Actualizar tags de un proyecto
+ */
+export async function updateProjectTags(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { tags } = req.body as { tags: string[] };
+    const userId = (req as AuthenticatedRequest).user.id;
+    const db = getDb();
+
+    const project = await db.get<Project>(
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    if (!project) {
+      res.status(404).json({ error: 'Proyecto no encontrado' });
+      return;
+    }
+
+    const tagsJSON = JSON.stringify(tags || []);
+    const timestamp = new Date().toISOString();
+
+    await db.run(
+      'UPDATE projects SET tags = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [tagsJSON, timestamp, id, userId]
+    );
+
+    const updated = await db.get<Project>(
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    const entries = await db.all(
+      'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+      [userId, id]
+    );
+    const totalMinutes = calculateTotalMinutes(entries);
+
+    res.json({
+      ...updated,
+      totalMinutes,
+      isActive: updated!.is_active,
+      orderIndex: updated!.order_index,
+      isFavorite: updated!.is_favorite ?? 0,
+      lastUsedAt: updated!.last_used_at ?? null,
+      tags: updated!.tags ?? '[]',
+      createdAt: updated!.created_at,
+      updatedAt: updated!.updated_at
+    });
+  } catch (error) {
+    console.error('Error updating project tags:', error);
+    res.status(500).json({ error: 'Error al actualizar tags del proyecto' });
   }
 }

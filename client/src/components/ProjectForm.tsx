@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { Project } from '../types';
 import { Modal } from './ui';
+import { TagInput } from './TagInput';
 
 interface ProjectFormProps {
   isOpen: boolean;
   project?: Project;
   onClose: () => void;
-  onSubmit: (name: string, description: string) => Promise<void>;
+  onSubmit: (name: string, description: string, tags: string[]) => Promise<void>;
 }
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClose, onSubmit }) => {
   const [name, setName] = useState(project?.name || '');
   const [description, setDescription] = useState(project?.description || '');
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,9 +21,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
     if (project) {
       setName(project.name);
       setDescription(project.description);
+      try {
+        const parsedTags = JSON.parse(project.tags || '[]');
+        setTags(Array.isArray(parsedTags) ? parsedTags : []);
+      } catch (e) {
+        setTags([]);
+      }
     } else {
       setName('');
       setDescription('');
+      setTags([]);
     }
     setError(null);
   }, [project, isOpen]);
@@ -36,7 +45,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
 
     try {
       setLoading(true);
-      await onSubmit(name.trim(), description.trim());
+      await onSubmit(name.trim(), description.trim(), tags);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar proyecto');
@@ -84,6 +93,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
             className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={loading}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tags
+          </label>
+          <TagInput
+            tags={tags}
+            onChange={setTags}
+            placeholder="Agregar tags (ej: Backend, Frontend...)"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Presiona Enter para agregar. Sugerencias: Backend, Frontend, Reunión, Admin, QA, Diseño, Marketing, Soporte
+          </p>
         </div>
 
         <div className="flex gap-2 justify-end pt-4">
