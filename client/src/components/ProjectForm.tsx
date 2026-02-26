@@ -7,13 +7,19 @@ interface ProjectFormProps {
   isOpen: boolean;
   project?: Project;
   onClose: () => void;
-  onSubmit: (name: string, description: string, tags: string[]) => Promise<void>;
+  onSubmit: (
+    name: string,
+    description: string,
+    tags: string[],
+    targetMinutes: number | null
+  ) => Promise<void>;
 }
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClose, onSubmit }) => {
   const [name, setName] = useState(project?.name || '');
   const [description, setDescription] = useState(project?.description || '');
   const [tags, setTags] = useState<string[]>([]);
+  const [targetHours, setTargetHours] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +27,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
     if (project) {
       setName(project.name);
       setDescription(project.description);
+      if (project.targetMinutes && project.targetMinutes > 0) {
+        setTargetHours((project.targetMinutes / 60).toString());
+      } else {
+        setTargetHours('');
+      }
       try {
         const parsedTags = JSON.parse(project.tags || '[]');
         setTags(Array.isArray(parsedTags) ? parsedTags : []);
@@ -31,6 +42,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
       setName('');
       setDescription('');
       setTags([]);
+      setTargetHours('');
     }
     setError(null);
   }, [project, isOpen]);
@@ -43,9 +55,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
       return;
     }
 
+    const targetValue = targetHours.trim();
+    let targetMinutes: number | null = null;
+    if (targetValue) {
+      const parsed = Number(targetValue);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        setError('El tiempo limite debe ser un numero mayor que 0');
+        return;
+      }
+      targetMinutes = Math.round(parsed * 60);
+    }
+
     try {
       setLoading(true);
-      await onSubmit(name.trim(), description.trim(), tags);
+      await onSubmit(name.trim(), description.trim(), tags, targetMinutes);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar proyecto');
@@ -93,6 +116,25 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
             className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={loading}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tiempo limite (horas)
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.25"
+            value={targetHours}
+            onChange={(e) => setTargetHours(e.target.value)}
+            placeholder="Ej: 40"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={loading}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Se mostrara una alerta visual al 80% y al superar el limite.
+          </p>
         </div>
 
         <div>

@@ -33,6 +33,7 @@ export async function getAllProjects(req: Request, res: Response): Promise<void>
           isFavorite: project.is_favorite ?? 0,
           lastUsedAt: project.last_used_at ?? null,
           tags: project.tags ?? '[]',
+          targetMinutes: project.target_minutes ?? null,
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -74,6 +75,7 @@ export async function getAllProjectsWithInactive(req: Request, res: Response): P
           isFavorite: project.is_favorite ?? 0,
           lastUsedAt: project.last_used_at ?? null,
           tags: project.tags ?? '[]',
+          targetMinutes: project.target_minutes ?? null,
           createdAt: project.created_at,
           updatedAt: project.updated_at
         };
@@ -111,7 +113,11 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
     );
     const totalMinutes = calculateTotalMinutes(entries);
 
-    res.json({ ...project, totalMinutes });
+    res.json({
+      ...project,
+      totalMinutes,
+      targetMinutes: project.target_minutes ?? null
+    });
   } catch (error) {
     console.error('Error getting project:', error);
     res.status(500).json({ error: 'Error al obtener proyecto' });
@@ -123,7 +129,7 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
  */
 export async function createProject(req: Request, res: Response): Promise<void> {
   try {
-    const { name, description = '', tags = [] } = req.body as CreateProjectRequest;
+    const { name, description = '', tags = [], targetMinutes } = req.body as CreateProjectRequest;
     const userId = (req as AuthenticatedRequest).user.id;
 
     if (!name || !name.trim()) {
@@ -131,14 +137,26 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       return;
     }
 
+    if (targetMinutes !== undefined && targetMinutes !== null) {
+      if (typeof targetMinutes !== 'number' || Number.isNaN(targetMinutes) || targetMinutes <= 0) {
+        res.status(400).json({ error: 'El tiempo limite debe ser un numero mayor que 0' });
+        return;
+      }
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
     const db = getDb();
     const tagsJSON = JSON.stringify(tags);
 
+    const targetMinutesValue =
+      typeof targetMinutes === 'number' && Number.isFinite(targetMinutes) && targetMinutes > 0
+        ? Math.round(targetMinutes)
+        : null;
+
     await db.run(
-      'INSERT INTO projects (id, user_id, name, description, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, userId, name.trim(), description.trim(), tagsJSON, now, now]
+      'INSERT INTO projects (id, user_id, name, description, tags, target_minutes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, userId, name.trim(), description.trim(), tagsJSON, targetMinutesValue, now, now]
     );
 
     const project = await db.get<Project>(
@@ -146,7 +164,12 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       [id, userId]
     );
 
-    res.status(201).json({ ...project, totalMinutes: 0, tags: project?.tags ?? '[]' });
+    res.status(201).json({
+      ...project,
+      totalMinutes: 0,
+      tags: project?.tags ?? '[]',
+      targetMinutes: project?.target_minutes ?? null
+    });
   } catch (error) {
     console.error('Error creating project:', error);
     res.status(500).json({ error: 'Error al crear proyecto' });
@@ -159,7 +182,7 @@ export async function createProject(req: Request, res: Response): Promise<void> 
 export async function updateProject(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const { name, description } = req.body as UpdateProjectRequest;
+    const { name, description, targetMinutes } = req.body as UpdateProjectRequest;
     const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
@@ -173,10 +196,24 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
       return;
     }
 
+    if (targetMinutes !== undefined && targetMinutes !== null) {
+      if (typeof targetMinutes !== 'number' || Number.isNaN(targetMinutes) || targetMinutes <= 0) {
+        res.status(400).json({ error: 'El tiempo limite debe ser un numero mayor que 0' });
+        return;
+      }
+    }
+
+    const targetMinutesValue =
+      targetMinutes === undefined
+        ? project.target_minutes ?? null
+        : targetMinutes === null
+          ? null
+          : Math.round(targetMinutes);
+
     const now = new Date().toISOString();
     await db.run(
-      'UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-      [name || project.name, description !== undefined ? description : project.description, now, id, userId]
+      'UPDATE projects SET name = ?, description = ?, target_minutes = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [name || project.name, description !== undefined ? description : project.description, targetMinutesValue, now, id, userId]
     );
 
     const updated = await db.get<Project>(
@@ -190,7 +227,11 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
     );
     const totalMinutes = calculateTotalMinutes(entries);
 
-    res.json({ ...updated, totalMinutes });
+    res.json({
+      ...updated,
+      totalMinutes,
+      targetMinutes: updated?.target_minutes ?? null
+    });
   } catch (error) {
     console.error('Error updating project:', error);
     res.status(500).json({ error: 'Error al actualizar proyecto' });

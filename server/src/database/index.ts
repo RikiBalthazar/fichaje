@@ -37,6 +37,7 @@ export async function initDb(): Promise<Database> {
       total_minutes INTEGER DEFAULT 0,
       is_active INTEGER DEFAULT 1,
       order_index INTEGER DEFAULT 0,
+      target_minutes INTEGER DEFAULT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -148,6 +149,13 @@ export async function initDb(): Promise<Database> {
   // Migration: agregar columna tags para clasificar proyectos con etiquetas
   try {
     await db.exec('ALTER TABLE projects ADD COLUMN tags TEXT DEFAULT "[]"');
+  } catch (e) {
+    // Column already exists
+  }
+
+  // Migration: agregar columna target_minutes para limite de tiempo por proyecto
+  try {
+    await db.exec('ALTER TABLE projects ADD COLUMN target_minutes INTEGER DEFAULT NULL');
   } catch (e) {
     // Column already exists
   }

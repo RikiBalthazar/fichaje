@@ -87,6 +87,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   const totalMinutes = project.totalMinutes + Math.floor(isActive ? elapsedSeconds / 60 : 0);
   const totalCentesimal = convertSecondsToCentesimal(totalMinutes * 60);
+  const targetMinutes = project.targetMinutes ?? null;
+  const isOverLimit = !!(targetMinutes && totalMinutes >= targetMinutes);
+  const isNearLimit = !!(targetMinutes && !isOverLimit && totalMinutes >= targetMinutes * 0.8);
 
   // Check Web Speech API support
   const speechSupported = typeof window !== 'undefined' && 
@@ -193,6 +196,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           isActive
             ? 'ring-2 ring-blue-500 bg-blue-50'
             : 'bg-white hover:shadow-xl'
+        } ${
+          isOverLimit
+            ? 'border-2 border-red-300'
+            : isNearLimit
+              ? 'border-2 border-yellow-300'
+              : ''
         }`}
       >
         {/* Header */}
@@ -216,6 +225,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 )}
               </div>
               <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
+              {targetMinutes && (
+                <div
+                  className={`mt-1 text-xs font-semibold ${
+                    isOverLimit
+                      ? 'text-red-600'
+                      : isNearLimit
+                        ? 'text-yellow-700'
+                        : 'text-gray-500'
+                  }`}
+                >
+                  {isOverLimit
+                    ? '⛔ Limite superado'
+                    : isNearLimit
+                      ? '⚠️ Cerca del limite'
+                      : '🎯 Limite'}{' '}
+                  {formatSecondsHHMM(targetMinutes * 60)}
+                </div>
+              )}
             </div>
             {/* Today's Hours Badge */}
             {todayMinutes > 0 && (

@@ -52,13 +52,24 @@ export const projectsAPI = {
     return data;
   },
 
-  create: async (name: string, description: string, tags: string[] = []): Promise<Project> => {
-    const { data } = await api.post('/projects', { name, description, tags });
+  create: async (
+    name: string,
+    description: string,
+    tags: string[] = [],
+    targetMinutes: number | null = null
+  ): Promise<Project> => {
+    const { data } = await api.post('/projects', { name, description, tags, targetMinutes });
     return data;
   },
 
-  update: async (id: string, name: string, description: string, tags: string[] = []): Promise<Project> => {
-    const { data } = await api.put(`/projects/${id}`, { name, description });
+  update: async (
+    id: string,
+    name: string,
+    description: string,
+    tags: string[] = [],
+    targetMinutes: number | null = null
+  ): Promise<Project> => {
+    const { data } = await api.put(`/projects/${id}`, { name, description, targetMinutes });
     // Update tags separately  
     await api.patch(`/projects/${id}/tags`, { tags });
     return data;

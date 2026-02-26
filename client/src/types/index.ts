@@ -9,6 +9,7 @@ export interface Project {
   isFavorite: number;
   lastUsedAt: string | null;
   tags: string; // JSON string array
+  targetMinutes?: number | null;
 }
 
 export interface TimeEntry {

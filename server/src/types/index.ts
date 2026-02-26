@@ -7,7 +7,10 @@ export interface Project {
   is_active: number;
   order_index: number;
   is_favorite: number;
-  last_used_at: string | null;  tags: string; // JSON string array  created_at: string;
+  last_used_at: string | null;
+  tags: string; // JSON string array
+  target_minutes?: number | null;
+  created_at: string;
   updated_at: string;
 }
 
@@ -27,12 +30,14 @@ export interface CreateProjectRequest {
   name: string;
   description?: string;
   tags?: string[];
+  targetMinutes?: number | null;
 }
 
 export interface UpdateProjectRequest {
   name?: string;
   description?: string;
   tags?: string[];
+  targetMinutes?: number | null;
 }
 
 export interface CreateTimeEntryRequest {

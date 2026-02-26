@@ -122,6 +122,36 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
       return lastUsed && lastUsed < thirtyDaysAgo;
     }).slice(0, 5);
 
+    // Limites de tiempo por proyecto
+    const projectsWithLimit = projects
+      .filter(p => (p.targetMinutes ?? 0) > 0)
+      .map(p => {
+        const targetMinutes = p.targetMinutes ?? 0;
+        const totalMinutes = p.totalMinutes ?? 0;
+        const ratio = targetMinutes > 0 ? totalMinutes / targetMinutes : 0;
+        const status = ratio >= 1 ? 'over' : ratio >= 0.8 ? 'near' : 'ok';
+        return {
+          id: p.id,
+          name: p.name,
+          totalHours: (totalMinutes / 60).toFixed(1),
+          targetHours: (targetMinutes / 60).toFixed(1),
+          ratio,
+          status
+        };
+      });
+
+    const limitItems = projectsWithLimit
+      .filter(p => p.status !== 'ok')
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 6);
+
+    const limitSummary = {
+      total: projectsWithLimit.length,
+      nearCount: projectsWithLimit.filter(p => p.status === 'near').length,
+      overCount: projectsWithLimit.filter(p => p.status === 'over').length,
+      items: limitItems
+    };
+
     return {
       totalHours: (totalSeconds / 3600).toFixed(1),
       prevTotalHours: (prevTotalSeconds / 3600).toFixed(1),
@@ -133,6 +163,7 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
       projectData,
       weekdayData,
       deadProjects,
+      limitSummary,
     };
   }, [entries, projects, timeRange]);
 
@@ -267,6 +298,39 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
             <div className="mt-3 text-xs text-gray-600 text-center">
               Día más productivo: <strong>{stats.weekdayData.reduce((max, d) => d.horasNum > max.horasNum ? d : max).day}</strong>
             </div>
+          </div>
+        )}
+
+        {/* Limites de tiempo */}
+        {stats.limitSummary.total > 0 && (
+          <div className="p-4 bg-white rounded-lg border border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-3">⏱️ Limites de Tiempo</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-sm text-gray-600">Con limite</div>
+                <div className="text-xl font-bold text-gray-800">{stats.limitSummary.total}</div>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="text-sm text-yellow-700">Cerca del limite</div>
+                <div className="text-xl font-bold text-yellow-800">{stats.limitSummary.nearCount}</div>
+              </div>
+              <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                <div className="text-sm text-red-700">Limite superado</div>
+                <div className="text-xl font-bold text-red-800">{stats.limitSummary.overCount}</div>
+              </div>
+            </div>
+            {stats.limitSummary.items.length > 0 && (
+              <div className="space-y-2">
+                {stats.limitSummary.items.map(item => (
+                  <div key={item.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-2">
+                    <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                    <div className={`text-xs font-semibold ${item.status === 'over' ? 'text-red-600' : 'text-yellow-700'}`}>
+                      {item.status === 'over' ? '⛔ Superado' : '⚠️ Cerca'} - {item.totalHours}h / {item.targetHours}h
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

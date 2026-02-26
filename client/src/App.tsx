@@ -399,9 +399,14 @@ function App() {
     }
   };
 
-  const handleCreateProject = async (name: string, description: string, tags: string[] = []) => {
+  const handleCreateProject = async (
+    name: string,
+    description: string,
+    tags: string[] = [],
+    targetMinutes: number | null = null
+  ) => {
     try {
-      await projectsAPI.create(name, description, tags);
+      await projectsAPI.create(name, description, tags, targetMinutes);
       await loadProjects();
       setShowProjectForm(false);
       showToast('Proyecto creado correctamente', 'success');
@@ -410,10 +415,15 @@ function App() {
     }
   };
 
-  const handleUpdateProject = async (name: string, description: string, tags: string[] = []) => {
+  const handleUpdateProject = async (
+    name: string,
+    description: string,
+    tags: string[] = [],
+    targetMinutes: number | null = null
+  ) => {
     if (!editingProject) return;
     try {
-      await projectsAPI.update(editingProject.id, name, description, tags);
+      await projectsAPI.update(editingProject.id, name, description, tags, targetMinutes);
       await loadProjects();
       setEditingProject(undefined);
       setShowProjectForm(false);
