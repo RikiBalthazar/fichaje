@@ -175,6 +175,24 @@ export async function initDb(): Promise<Database> {
       ON user_tags(user_id);
   `);
 
+  // Crear tabla audit_logs para rastrear acciones del usuario
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      timestamp TEXT NOT NULL,
+      details TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id
+      ON audit_logs(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp
+      ON audit_logs(timestamp);
+  `);
+
   console.log('✅ Database initialized');
   return db;
 }

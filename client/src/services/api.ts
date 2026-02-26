@@ -210,4 +210,26 @@ export const timerAPI = {
   }
 };
 
+export const backupAPI = {
+  exportJSON: async () => {
+    const response = await fetch('/api/backup/json', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    });
+    if (!response.ok) throw new Error('Error al exportar');
+    return response.blob();
+  },
+
+  importJSON: async (data: any, mode: 'replace' | 'merge' = 'replace') => {
+    const { data: result } = await api.post('/backup/json', { data, mode });
+    return result;
+  },
+
+  getAuditLogs: async (limit = 50) => {
+    const { data } = await api.get(`/backup/audit-logs?limit=${limit}`);
+    return data;
+  }
+};
+
 export default api;

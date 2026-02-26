@@ -11,6 +11,7 @@ import authRouter from './routes/auth.js';
 import timerRouter from './routes/timer.js';
 import tagsRouter from './routes/tags.js';
 import dashboardRouter from './routes/dashboard.js';
+import backupRouter from './routes/backup.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/api/templates', requireAuth, templatesRouter);
 app.use('/api/timer', requireAuth, timerRouter);
 app.use('/api/tags', requireAuth, tagsRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
+app.use('/api/backup', requireAuth, backupRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
