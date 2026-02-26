@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Project, DescriptionTemplate } from '../types';
-import { formatSeconds, convertSecondsToCentesimal } from '../utils/time';
+import { formatSeconds, formatSecondsHHMM, convertSecondsToCentesimal } from '../utils/time';
 import { useSpeechRecognition } from '../hooks';
 import { templatesAPI } from '../services/api';
 import { Modal } from './ui';
@@ -158,7 +158,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         onDragOver={(e) => onDragOver?.(e, project.id)}
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop?.(e, project.id)}
-        className={`rounded-lg shadow-lg transition-all p-4 h-full flex flex-col cursor-move ${
+        className={`rounded-lg shadow-lg transition-all p-3 h-full flex flex-col cursor-move ${
           isDragged ? 'opacity-50 bg-gray-100' : ''
         } ${
           isDragOver ? 'ring-2 ring-green-500 border-2 border-green-500' : ''
@@ -169,95 +169,97 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         }`}
       >
         {/* Header */}
-        <div className="mb-3">
-          <h3 className="text-lg font-bold text-gray-800">{project.name}</h3>
-          <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+        <div className="mb-2">
+          <h3 className="text-base font-bold text-gray-800">{project.name}</h3>
+          <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
         </div>
 
         {/* Time Display */}
-        <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-          <div className="text-xs text-gray-600 mb-1">Tiempo acumulado</div>
-          <div className="text-xl font-mono font-bold text-gray-800">
-            {formatSeconds(totalMinutes * 60)}
-          </div>
-          <div className="text-xs text-blue-600 mt-1">
-            {totalCentesimal} h (centesimal)
+        <div className="mb-3 p-2 bg-gray-100 rounded">
+          <div className="text-xs text-gray-600 mb-0.5">Tiempo acumulado</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-mono font-bold text-gray-800">
+              {formatSecondsHHMM(totalMinutes * 60)}
+            </span>
+            <span className="text-xs text-blue-600">
+              ({totalCentesimal}h)
+            </span>
           </div>
         </div>
 
         {/* Current Session */}
         {isActive && (
-          <div className="mb-4 p-2 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-xs text-green-600 font-semibold mb-1">SESIÓN ACTIVA</div>
-            <div className="text-base font-mono font-bold text-green-700">
+          <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded">
+            <div className="text-xs text-green-600 font-semibold mb-0.5">SESIÓN ACTIVA</div>
+            <div className="text-sm font-mono font-bold text-green-700">
               {formatSeconds(elapsedSeconds)}
             </div>
           </div>
         )}
 
         {isPaused && (
-          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="text-xs text-yellow-700 font-semibold mb-1">SESIÓN EN PAUSA</div>
-            <div className="text-base font-mono font-bold text-yellow-800">
+          <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+            <div className="text-xs text-yellow-700 font-semibold mb-0.5">SESIÓN EN PAUSA</div>
+            <div className="text-sm font-mono font-bold text-yellow-800">
               {formatSeconds(pausedElapsedSeconds)}
             </div>
           </div>
         )}
 
         {/* Buttons */}
-        <div className="flex flex-col gap-2 mt-auto">
+        <div className="flex flex-col gap-1.5 mt-auto">
           {isActive ? (
             <>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={onPause}
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
                 >
-                  <span className="text-lg">⏸</span> Pausa
+                  <span>⏸</span> Pausa
                 </button>
                 <button
                   onClick={onStop}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
                 >
-                  <span className="text-lg">⏹</span> Detener
+                  <span>⏹</span> Detener
                 </button>
               </div>
               <button
                 onClick={handleDescriptionModal}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
               >
-                <span className="text-lg">🎤</span> Descripción
+                <span>🎤</span> Descripción
               </button>
             </>
           ) : isPaused ? (
             <>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={() => onPlay(project.id)}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
                 >
-                  <span className="text-lg">▶</span> Reanudar
+                  <span>▶</span> Reanudar
                 </button>
                 <button
                   onClick={() => onStopPaused(project.id)}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
                 >
-                  <span className="text-lg">⏹</span> Detener
+                  <span>⏹</span> Detener
                 </button>
               </div>
               <button
                 onClick={handleDescriptionModal}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
               >
-                <span className="text-lg">🎤</span> Descripción
+                <span>🎤</span> Descripción
               </button>
             </>
           ) : (
             <button
               onClick={() => onPlay(project.id)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded transition flex items-center justify-center gap-1.5 text-sm"
             >
-              <span className="text-xl">▶</span> Iniciar
+              <span className="text-base">▶</span> Iniciar
             </button>
           )}
         </div>

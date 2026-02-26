@@ -35,6 +35,16 @@ export function formatSeconds(seconds: number): string {
 }
 
 /**
+ * Formatea segundos a formato HH:MM (sin segundos)
+ */
+export function formatSecondsHHMM(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+/**
  * Formatea minutos a formato legible HH:MM
  */
 export function formatMinutes(minutes: number): string {
