@@ -86,25 +86,29 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose, 
   if (!isOpen) return null;
 
   const sizeClass = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-4xl'
+    sm: 'sm:max-w-sm',
+    md: 'sm:max-w-md',
+    lg: 'sm:max-w-lg md:max-w-2xl',
+    xl: 'sm:max-w-xl md:max-w-3xl lg:max-w-5xl'
   }[size];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white rounded-lg shadow-xl p-6 ${sizeClass} w-full mx-4 max-h-[90vh] flex flex-col`}>
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-bold">{title}</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className={`bg-white rounded-lg shadow-xl ${sizeClass} w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col`}>
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 sm:p-6 pb-3 sm:pb-4 border-b flex-shrink-0">
+          <h2 className="text-lg sm:text-xl font-bold pr-4">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-gray-500 hover:text-gray-700 text-2xl sm:text-3xl leading-none flex-shrink-0 w-8 h-8 flex items-center justify-center"
+            aria-label="Cerrar"
           >
             ×
           </button>
         </div>
-        <div className="overflow-y-auto flex-1">
+        
+        {/* Content */}
+        <div className="overflow-y-auto flex-1 p-4 sm:p-6">
           {children}
         </div>
       </div>

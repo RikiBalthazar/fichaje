@@ -71,26 +71,26 @@ export const AdminView: React.FC<AdminViewProps> = ({
   return (
     <Modal isOpen={isOpen} title="Configuración" onClose={onClose} size="xl">
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-gray-200 mb-4 sm:mb-6">
         <button
           onClick={() => setActiveTab('entries')}
-          className={`px-6 py-3 font-semibold transition-colors ${
+          className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors ${
             activeTab === 'entries'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          📋 Registros
+          📋 <span className="hidden xs:inline">Registros</span>
         </button>
         <button
           onClick={() => setActiveTab('tags')}
-          className={`px-6 py-3 font-semibold transition-colors ${
+          className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors ${
             activeTab === 'tags'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          🏷️ Tags
+          🏷️ <span className="hidden xs:inline">Tags</span>
         </button>
       </div>
 
@@ -155,16 +155,16 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </p>
       </div>
 
-      <div className="overflow-x-auto overflow-y-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto overflow-y-auto -mx-4 sm:mx-0">
+        <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead className="bg-gray-100 border-b-2 border-gray-300">
             <tr>
-              <th className="px-4 py-2 text-left font-semibold">Proyecto</th>
-              <th className="px-4 py-2 text-left font-semibold">Duración</th>
-              <th className="px-4 py-2 text-left font-semibold">Centesimal</th>
-              <th className="px-4 py-2 text-left font-semibold">Descripción</th>
-              <th className="px-4 py-2 text-left font-semibold">Fecha</th>
-              <th className="px-4 py-2 text-center font-semibold">Acciones</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold">Proyecto</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold">Duración</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold hidden sm:table-cell">Centesimal</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold">Descripción</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-semibold hidden md:table-cell">Fecha</th>
+              <th className="px-2 sm:px-4 py-2 text-center font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -177,10 +177,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
             ) : (
               sortedEntries.map((entry) => (
                 <tr key={entry.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-gray-800">
                     {getProjectName(entry.projectId)}
                   </td>
-                  <td className="px-4 py-3 font-mono">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 font-mono">
                     {editingId === entry.id ? (
                       <input
                         type="number"
@@ -194,10 +194,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
                       `${Math.floor(entry.duration / 60)}m`
                     )}
                   </td>
-                  <td className="px-4 py-3 font-mono font-bold text-blue-600">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 font-mono font-bold text-blue-600 hidden sm:table-cell">
                     {entry.durationCentesimal}
                   </td>
-                  <td className="px-4 py-3 max-w-xs truncate">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 max-w-[150px] sm:max-w-xs truncate">
                     {editingId === entry.id ? (
                       <input
                         type="text"
@@ -211,40 +211,40 @@ export const AdminView: React.FC<AdminViewProps> = ({
                       entry.description || '-'
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs text-gray-600 hidden md:table-cell">
                     {formatDate(entry.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-center space-x-1">
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-center space-x-1">
                     {editingId === entry.id ? (
-                      <>
+                      <div className="flex flex-col sm:flex-row gap-1 sm:gap-1 items-center justify-center">
                         <button
                           onClick={() => handleSaveEdit(entry)}
-                          className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                          className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 whitespace-nowrap"
                         >
                           Guardar
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
+                          className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 whitespace-nowrap"
                         >
                           Cancelar
                         </button>
-                      </>
+                      </div>
                     ) : (
-                      <>
+                      <div className="flex flex-col sm:flex-row gap-1 sm:gap-1 items-center justify-center">
                         <button
                           onClick={() => handleStartEdit(entry)}
-                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 whitespace-nowrap"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => onDelete(entry.id)}
-                          className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                          className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 whitespace-nowrap"
                         >
                           Eliminar
                         </button>
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>

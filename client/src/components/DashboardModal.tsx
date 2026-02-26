@@ -174,30 +174,30 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
         <div className="flex justify-end gap-2">
           <button
             onClick={() => setTimeRange(7)}
-            className={`px-4 py-2 rounded-lg font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition ${
               timeRange === 7
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            Últimos 7 días
+            <span className="hidden sm:inline">Últimos </span>7 días
           </button>
           <button
             onClick={() => setTimeRange(30)}
-            className={`px-4 py-2 rounded-lg font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition ${
               timeRange === 30
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            Últimos 30 días
+            <span className="hidden sm:inline">Últimos </span>30 días
           </button>
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-            <div className="text-2xl font-bold text-blue-600">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">
               {stats.totalHours}h
             </div>
             <div className="text-xs text-blue-700 mt-1">Total Horas</div>
@@ -206,22 +206,22 @@ export const DashboardModal: React.FC<DashboardModalProps> = ({
             </div>
           </div>
 
-          <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               {stats.avgPerDay}h
             </div>
             <div className="text-xs text-green-700 mt-1">Promedio/Día</div>
           </div>
 
-          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">
               {stats.totalEntries}
             </div>
             <div className="text-xs text-purple-700 mt-1">Registros</div>
           </div>
 
-          <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-            <div className="text-2xl font-bold text-orange-600">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">
               {stats.uniqueProjects}
             </div>
             <div className="text-xs text-orange-700 mt-1">Proyectos Activos</div>
