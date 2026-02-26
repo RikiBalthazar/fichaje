@@ -6,7 +6,7 @@
 
 ## ✅ PROGRESO GENERAL
 - ✅ Sprint 1: 100% Completo (4/4 features)
-- 🔄 Sprint 2: 0% Completo (0/3 features) - EN CURSO
+- 🔄 Sprint 2: 33% Completo (1/3 features) - EN CURSO
 - ❌ Sprint 3: No iniciado
 - ❌ Sprint 4: No iniciado
 
@@ -123,23 +123,29 @@
 ### 📊 **SPRINT 2: ANALÍTICA Y ALERTAS** (Semana 3-4)
 **Objetivo:** Visualizar datos y alertar sobre límites de tiempo
 
-#### 5️⃣ **Notificaciones y Alertas** - ⏸️ PAUSADO (implementación básica completa)
+#### 5️⃣ **Notificaciones y Alertas** - ✅ COMPLETADO
 **Descripción:** Alertar cuando se supera límite de horas
-- [ ] Push notification cuando pases de 8:30 horas en un día
-  - [ ] Solicitar permiso al usuario
-  - [ ] Toast visual en app
-  - [ ] Mensaje: "⚠️ Has trabajado más de 8:30 horas hoy. Considera tomar un descanso"
-- [ ] Verificación cada hora en reloj activo
-- [ ] Recordatorio al finalizar día (opcional)
-- [ ] No repetir notificación si ya se mostró en el día
+- [x] Push notification cuando pasas de 8:30 horas en un día
+  - [x] Solicitar permiso al usuario (al cargar la app)
+  - [x] Toast visual en app (esquina inferior derecha)
+  - [x] Mensaje: "⚠️ Has trabajado Xh Ym hoy. Considera tomar un descanso"
+- [x] Verificación cada minuto cuando timer está activo
+- [x] No repetir notificación si ya se mostró en el día
+- [x] Toast persistente (no se auto-cierra) con botón de cerrar
 
 **Notas técnicas:**
-- Usar Web Notifications API
-- Guardar timestamp de última notificación (localStorage)
-- Calcular total horas diarias en App.tsx
-- Service Worker para persist
+- ✅ Hook customizado `useWorkingHoursAlert` con detección automática
+- ✅ Web Notifications API con permisos solicitados al inicio
+- ✅ Guardado de timestamp en localStorage por día
+- ✅ Cálculo total: minutos registrados + segundos del timer activo
+- ✅ Límite: 8.5 horas (30600 segundos)
+- ✅ Verificación cada 60 segundos mientras timer corre
+- ✅ Toast con duration=0 para alertas críticas (no auto-dismiss)
+- ✅ Botón de cerrar manual en toasts persistentes
 
-**Dependencias:** Ninguna
+**Dependencias:** Web Notifications API - ✅ COMPLETADO
+
+**Fecha de completación:** 26 de Febrero de 2026
 
 ---
 
@@ -299,7 +305,7 @@
 | Proyectos Favoritos/Recientes | 🟢 DONE | 100% | 1 |
 | Búsqueda y Filtros | 🟢 DONE | 100% | 1 |
 | Tags en Proyectos | 🟢 DONE | 100% | 1 |
-| Notificaciones de Límite 8:30h | 🔴 TODO | 0% | 2 |
+| Notificaciones de Límite 8:30h | 🟢 DONE | 100% | 2 |
 | Dashboard Mejorado | 🔴 TODO | 0% | 2 |
 | Objetivos y Metas | 🔴 TODO | 0% | 2 |
 | PWA y Multi-dispositivo | 🔴 TODO | 0% | 3 |
