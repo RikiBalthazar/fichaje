@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense, useCallback, useRef } from 'react';
 import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -68,6 +68,9 @@ function App() {
   // Drag and drop state
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
+  
+  // Ref para mantener referencia actualizada a projects en drag handlers
+  const projectsRef = useRef<Project[]>([]);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,6 +149,11 @@ function App() {
       console.error('Error loading entries:', error);
     }
   };
+
+  // Mantener ref actualizado para drag handlers
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
 
   // Calculate today's minutes per project
   const getTodayMinutesByProject = (): { [projectId: string]: number } => {
@@ -259,22 +267,22 @@ function App() {
   };
 
   // Drag and Drop handlers
-  const handleDragStart = (e: React.DragEvent, projectId: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, projectId: string) => {
     setDraggedProjectId(projectId);
     e.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, projectId: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, projectId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverProjectId(projectId);
-  };
+  }, []);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOverProjectId(null);
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent, targetProjectId: string) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetProjectId: string) => {
     e.preventDefault();
     
     if (!draggedProjectId || draggedProjectId === targetProjectId) {
@@ -283,9 +291,9 @@ function App() {
       return;
     }
 
-    // Encontrar índices
-    const draggedIndex = projects.findIndex(p => p.id === draggedProjectId);
-    const targetIndex = projects.findIndex(p => p.id === targetProjectId);
+    // Encontrar índices usando la ref actualizada
+    const draggedIndex = projectsRef.current.findIndex(p => p.id === draggedProjectId);
+    const targetIndex = projectsRef.current.findIndex(p => p.id === targetProjectId);
 
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedProjectId(null);
@@ -294,7 +302,7 @@ function App() {
     }
 
     // Crear nuevo array reordenado
-    const newProjects = [...projects];
+    const newProjects = [...projectsRef.current];
     const [removed] = newProjects.splice(draggedIndex, 1);
     newProjects.splice(targetIndex, 0, removed);
 
@@ -309,12 +317,12 @@ function App() {
       console.error('Error updating order:', error);
       showToast('Error al actualizar orden', 'error');
       // Revertir cambios
-      setProjects([...projects]);
+      setProjects([...projectsRef.current]);
     }
 
     setDraggedProjectId(null);
     setDragOverProjectId(null);
-  };
+  }, [draggedProjectId]);
 
   const handleToggleProjectActive = async (projectId: string) => {
     try {
