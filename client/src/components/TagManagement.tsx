@@ -146,33 +146,35 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
       {/* Crear nuevo tag */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-gray-800 mb-3">Crear nuevo tag</h3>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <input
             type="text"
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
             placeholder="Nombre del tag"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateTag()}
+            className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            onKeyDown={(e) => e.key === 'Enter' && !loading && handleCreateTag()}
           />
           <div className="relative">
             <button
+              type="button"
               onClick={() => setShowColorPicker(showColorPicker === 'new' ? null : 'new')}
               className={`px-4 py-2 rounded-lg border-2 font-medium ${newTagColor}`}
             >
               Color
             </button>
             {showColorPicker === 'new' && (
-              <div className="absolute z-10 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-3 w-64">
-                <div className="grid grid-cols-3 gap-2">
+              <div className="absolute right-0 z-50 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-3 max-h-[300px] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2 w-48">
                   {COLOR_PRESETS.map((preset) => (
                     <button
+                      type="button"
                       key={preset.name}
                       onClick={() => {
                         setNewTagColor(preset.value);
                         setShowColorPicker(null);
                       }}
-                      className={`px-3 py-2 rounded text-sm font-medium border-2 ${preset.value} hover:scale-105 transition`}
+                      className={`px-2 py-1.5 rounded text-xs font-medium border-2 ${preset.value} hover:scale-105 transition`}
                     >
                       {preset.name}
                     </button>
@@ -182,11 +184,12 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
             )}
           </div>
           <button
+            type="button"
             onClick={handleCreateTag}
             disabled={loading || !newTagName.trim()}
             className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            Crear
+            {loading ? 'Creando...' : 'Crear'}
           </button>
         </div>
       </div>
@@ -216,22 +219,24 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
                     />
                     <div className="relative">
                       <button
+                        type="button"
                         onClick={() => setShowColorPicker(showColorPicker === tag.id ? null : tag.id)}
                         className={`px-4 py-2 rounded-lg border-2 font-medium ${editColor}`}
                       >
                         Color
                       </button>
                       {showColorPicker === tag.id && (
-                        <div className="absolute z-10 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-3 w-64">
-                          <div className="grid grid-cols-3 gap-2">
+                        <div className="absolute right-0 z-50 mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-3 max-h-[300px] overflow-y-auto">
+                          <div className="grid grid-cols-2 gap-2 w-48">
                             {COLOR_PRESETS.map((preset) => (
                               <button
+                                type="button"
                                 key={preset.name}
                                 onClick={() => {
                                   setEditColor(preset.value);
                                   setShowColorPicker(null);
                                 }}
-                                className={`px-3 py-2 rounded text-sm font-medium border-2 ${preset.value} hover:scale-105 transition`}
+                                className={`px-2 py-1.5 rounded text-xs font-medium border-2 ${preset.value} hover:scale-105 transition`}
                               >
                                 {preset.name}
                               </button>
@@ -241,12 +246,14 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
                       )}
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleSaveEdit(tag.id)}
                       className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold"
                     >
                       Guardar
                     </button>
                     <button
+                      type="button"
                       onClick={() => setEditingId(null)}
                       className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg font-semibold"
                     >
@@ -260,12 +267,14 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
                     </span>
                     <div className="flex-1"></div>
                     <button
+                      type="button"
                       onClick={() => handleStartEdit(tag)}
                       className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-semibold transition"
                     >
                       Editar
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(tag.id)}
                       className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold transition"
                     >
