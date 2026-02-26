@@ -6,7 +6,7 @@
 
 ## ✅ PROGRESO GENERAL
 - ✅ Sprint 1: 100% Completo (4/4 features)
-- 🔄 Sprint 2: 33% Completo (1/3 features) - EN CURSO
+- 🔄 Sprint 2: 66% Completo (2/3 features) - EN CURSO
 - ❌ Sprint 3: No iniciado
 - ❌ Sprint 4: No iniciado
 
@@ -149,31 +149,41 @@
 
 ---
 
-#### 6️⃣ **Dashboard Mejorado** - ❌ NO INICIADO
+#### 6️⃣ **Dashboard Mejorado** - ✅ COMPLETADO
 **Descripción:** Gráficos y análisis de datos
-- [ ] Gráfico de barras: Horas por proyecto (últimos 7/30 días)
-  - [ ] Selector: últimos 7 días / últimos 30 días / este mes
-  - [ ] Ordenar por mayor uso
-- [ ] Gráfico de línea: Tendencia semanal de horas
-  - [ ] Mostrar evolución de lunes a domingo
-  - [ ] Línea de promedio
-- [ ] Comparativa: Esta semana vs semana anterior
-  - [ ] Porcentaje de cambio: +5%, -10%, etc.
-- [ ] Distribución por día de la semana
-  - [ ] Cards: Lunes 8h, Martes 6h, etc.
-  - [ ] Identificar día más productivo
-- [ ] Proyectos "muertos" (sin actividad en 30 días)
-  - [ ] Lista desplegable
-  - [ ] Opción de archivar
+- [x] Gráfico de barras: Horas por proyecto (últimos 7/30 días)
+  - [x] Selector: últimos 7 días / últimos 30 días
+  - [x] Ordenar por mayor uso (Top 8 proyectos)
+  - [x] Coloreado con paleta de 8 colores
+- [x] Gráfico de línea: Tendencia diaria de horas
+  - [x] Mostrar evolución día a día
+  - [x] Grid con líneas de referencia
+  - [x] Tooltips con valores exactos
+- [x] Comparativa: Período actual vs período anterior
+  - [x] Porcentaje de cambio: ↑5%, ↓10%, etc.
+  - [x] Indicador visual verde/rojo
+- [x] Distribución por día de la semana
+  - [x] Barras verticales con días más/menos productivos
+  - [x] Identificar día más productivo automáticamente
+- [x] Proyectos "muertos" (sin actividad en 30 días)
+  - [x] Lista con últimas fechas de actividad
+  - [x] Alerta visual en rojo
 
 **Notas técnicas:**
-- Usar librería Chart.js o Recharts
-- Crear hook useDashboardData()
-- Calcular totales en servidor (POST /api/dashboard/stats)
-- Memoizar cálculos pesados
-- Caché en localStorage con TTL de 1 hora
+- ✅ Instalada librería Recharts 3.7.0
+- ✅ Creado endpoint GET /api/dashboard/stats?days=7|30
+- ✅ Controller con SQL optimizado (LEFT JOIN, agregaciones)
+- ✅ Componentes: LineChart, BarChart, ResponsiveContainer, Cell
+- ✅ 4 KPIs con gradientes: Total, Promedio/Día, Registros, Proyectos
+- ✅ Selector de tiempo (7/30 días) con botones interactivos
+- ✅ Datos cacheados con useMemo para rendimiento
+- ✅ Responsive design con grid adaptativo
+- ✅ Weekly distribution con barras personalizadas
+- ✅ Dead projects con detección automática (30 días)
 
-**Dependencias:** npm install chart.js recharts
+**Dependencias:** npm install recharts - ✅ COMPLETADO
+
+**Fecha de completación:** 26 de Febrero de 2026
 
 ---
 
