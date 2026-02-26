@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function getAllTags(req: Request, res: Response) {
   try {
     const db = getDb();
-    const userId = (req as any).userId;
+    const userId = (req as any).user.id;
 
     const tags = await db.all(
       'SELECT id, name, color, created_at as createdAt FROM user_tags WHERE user_id = ? ORDER BY name ASC',
@@ -24,7 +24,7 @@ export async function getAllTags(req: Request, res: Response) {
 export async function createTag(req: Request, res: Response) {
   try {
     const db = getDb();
-    const userId = (req as any).userId;
+    const userId = (req as any).user.id;
     const { name, color } = req.body;
 
     if (!name || !color) {
@@ -65,7 +65,7 @@ export async function createTag(req: Request, res: Response) {
 export async function updateTag(req: Request, res: Response) {
   try {
     const db = getDb();
-    const userId = (req as any).userId;
+    const userId = (req as any).user.id;
     const { id } = req.params;
     const { name, color } = req.body;
 
@@ -114,7 +114,7 @@ export async function updateTag(req: Request, res: Response) {
 export async function deleteTag(req: Request, res: Response) {
   try {
     const db = getDb();
-    const userId = (req as any).userId;
+    const userId = (req as any).user.id;
     const { id } = req.params;
 
     // Verificar que el tag pertenece al usuario

@@ -395,7 +395,7 @@ export async function updateProjectTags(req: Request, res: Response): Promise<vo
       [tagsJSON, timestamp, id, userId]
     );
 
-    const updated = await db.get<Project>(
+    const updated = await db.get(
       'SELECT * FROM projects WHERE id = ? AND user_id = ?',
       [id, userId]
     );
