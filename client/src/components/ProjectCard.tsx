@@ -23,6 +23,8 @@ interface ProjectCardProps {
   onDragOver?: (e: React.DragEvent, projectId: string) => void;
   onDragLeave?: () => void;
   onDrop?: (e: React.DragEvent, projectId: string) => void;
+  forceOpenDescriptionModal?: boolean;
+  onDescriptionModalClose?: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -43,6 +45,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDragOver,
   onDragLeave,
   onDrop,
+  forceOpenDescriptionModal = false,
+  onDescriptionModalClose,
 }) => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [templates, setTemplates] = useState<DescriptionTemplate[]>([]);
@@ -54,6 +58,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       loadTemplates();
     }
   }, [showDescriptionModal]);
+
+  // Abrir modal desde keyboard shortcut (Alt+V)
+  useEffect(() => {
+    if (forceOpenDescriptionModal && (isActive || isPaused)) {
+      console.log('⌨️ Abriendo modal de descripción por atajo de teclado');
+      setShowDescriptionModal(true);
+      setTranscript(currentDescriptionDraft || '');
+      if (onDescriptionModalClose) {
+        // Resetear el estado en el padre después de abrirlo
+        setTimeout(() => onDescriptionModalClose(), 100);
+      }
+    }
+  }, [forceOpenDescriptionModal, isActive, isPaused, currentDescriptionDraft, setTranscript, onDescriptionModalClose]);
 
   const loadTemplates = async () => {
     try {
@@ -130,6 +147,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     // Cerrar modal
     console.log('🚪 Cerrando modal...');
     setShowDescriptionModal(false);
+    if (onDescriptionModalClose) {
+      onDescriptionModalClose();
+    }
   };
 
   const handleClearDescription = () => {
@@ -148,6 +168,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       stopListening();
     }
     setShowDescriptionModal(false);
+    if (onDescriptionModalClose) {
+      onDescriptionModalClose();
+    }
   };
 
   return (

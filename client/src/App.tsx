@@ -47,6 +47,7 @@ function App() {
 
   // Keyboard help
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [descriptionModalProjectId, setDescriptionModalProjectId] = useState<string | null>(null);
 
   // Description drafts por proyecto (mientras timer está corriendo)
   const [descriptionDrafts, setDescriptionDrafts] = useState<{ [projectId: string]: string }>({});
@@ -216,17 +217,16 @@ function App() {
       return;
     }
 
-    // Mostrar notificación de atajo activado
+    // Abrir modal de descripción del proyecto activo
+    setDescriptionModalProjectId(activeProjectId);
+    console.log(`🎤 Abriendo modal de descripción para proyecto ${activeProjectId}`);
+    
     setToastMessage({
       id: Date.now().toString(),
-      message: '🎤 Grabación de voz activada - Abre el modal de descripción (Alt + V)',
+      message: '🎤 Modal de descripción abierto',
       type: 'success',
       duration: 2000
     });
-
-    // TODO: En una versión mejorada, esto abrirá el modal de descripción automáticamente
-    // Por ahora simplemente indicamos que el atajo funciona
-    console.log(`🎤 Grabación de voz activada para proyecto ${activeProjectId}`);
   };
 
   const handlePauseProject = async () => {
@@ -610,6 +610,8 @@ function App() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                forceOpenDescriptionModal={descriptionModalProjectId === project.id}
+                onDescriptionModalClose={() => setDescriptionModalProjectId(null)}
               />
             ))}
           </div>

@@ -99,7 +99,7 @@ export const useKeyboardShortcuts = ({
       console.log('🛑 useKeyboardShortcuts desmontado');
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleKeyDown, projectIds, isAnyModalOpen]);
+  }, [handleKeyDown]);
 };
 
 // Ayuda de atajos para mostrar en la app
