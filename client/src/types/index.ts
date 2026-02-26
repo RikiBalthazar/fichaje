@@ -26,6 +26,28 @@ export interface TimerState {
   startedAt: number;
 }
 
+export interface TimerStateResponse {
+  active: {
+    projectId: string;
+    startedAt: string;
+    accumulatedSeconds: number;
+  } | null;
+  paused: Array<{
+    projectId: string;
+    accumulatedSeconds: number;
+  }>;
+}
+
+export interface User {
+  id: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
 export interface DescriptionTemplate {
   id: string;
   name: string;

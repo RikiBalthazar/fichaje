@@ -1,112 +1,113 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TimerState } from '../types';
+import { TimerState, TimerStateResponse } from '../types';
+import { timerAPI } from '../services/api';
 
-export function useTimer() {
+export function useTimer(enabled = true) {
   const [timerState, setTimerState] = useState<TimerState>({
     projectId: null,
     isRunning: false,
     elapsedSeconds: 0,
     startedAt: 0
   });
+  const [pausedTimers, setPausedTimers] = useState<Record<string, number>>({});
+  const [serverState, setServerState] = useState<TimerStateResponse>({
+    active: null,
+    paused: []
+  });
+  const [tick, setTick] = useState(0);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const tickRef = useRef<NodeJS.Timeout | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Restaurar timer del localStorage si existe
-  useEffect(() => {
-    const saved = localStorage.getItem('timerState');
-    if (saved) {
-      try {
-        const state = JSON.parse(saved);
-        setTimerState(state);
-        if (state.isRunning) {
-          // El timer estaba corriendo, reiniciarlo
-          const elapsedSinceClose = Math.floor((Date.now() - state.startedAt) / 1000);
-          setTimerState(prev => ({
-            ...prev,
-            elapsedSeconds: prev.elapsedSeconds + elapsedSinceClose
-          }));
-        }
-      } catch (e) {
-        console.error('Error restoring timer state:', e);
-      }
+  const syncState = useCallback(async () => {
+    if (!enabled) return;
+    try {
+      const state = await timerAPI.getState();
+      setServerState(state);
+    } catch (error) {
+      console.error('Error syncing timer state:', error);
     }
-  }, []);
+  }, [enabled]);
 
-  // Guardar timer en localStorage
   useEffect(() => {
-    localStorage.setItem('timerState', JSON.stringify(timerState));
-  }, [timerState]);
+    if (!enabled) return;
 
-  // Incrementar timer cada segundo
-  useEffect(() => {
-    if (!timerState.isRunning) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
+    syncState();
 
-    intervalRef.current = setInterval(() => {
-      setTimerState(prev => ({
-        ...prev,
-        elapsedSeconds: prev.elapsedSeconds + 1
-      }));
+    pollRef.current = setInterval(() => {
+      syncState();
+    }, 10000);
+
+    tickRef.current = setInterval(() => {
+      setTick(Date.now());
     }, 1000);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      if (tickRef.current) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
       }
     };
-  }, [timerState.isRunning]);
+  }, [enabled, syncState]);
 
-  const start = useCallback((projectId: string, initialElapsedSeconds = 0) => {
-    // Pausar cualquier timer anterior
-    setTimerState(() => ({
-      projectId,
-      isRunning: true,
-      elapsedSeconds: initialElapsedSeconds,
-      startedAt: Date.now() - initialElapsedSeconds * 1000
-    }));
-  }, []);
+  useEffect(() => {
+    const active = serverState.active;
+    if (!active) {
+      setTimerState({
+        projectId: null,
+        isRunning: false,
+        elapsedSeconds: 0,
+        startedAt: 0
+      });
+    } else {
+      const startedAtMs = new Date(active.startedAt).getTime();
+      const elapsedSeconds = active.accumulatedSeconds + Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      setTimerState({
+        projectId: active.projectId,
+        isRunning: true,
+        elapsedSeconds,
+        startedAt: startedAtMs
+      });
+    }
 
-  const pause = useCallback(() => {
-    setTimerState(prev => ({
-      ...prev,
-      isRunning: false
-    }));
-  }, []);
-
-  const reset = useCallback(() => {
-    setTimerState({
-      projectId: null,
-      isRunning: false,
-      elapsedSeconds: 0,
-      startedAt: 0
+    const pausedMap: Record<string, number> = {};
+    serverState.paused.forEach((timer) => {
+      pausedMap[timer.projectId] = timer.accumulatedSeconds;
     });
-    localStorage.removeItem('timerState');
-  }, []);
+    setPausedTimers(pausedMap);
+  }, [serverState, tick]);
 
-  const stop = useCallback((): { projectId: string; elapsedSeconds: number } | null => {
-    if (!timerState.projectId) return null;
-    
-    const result = {
-      projectId: timerState.projectId,
-      elapsedSeconds: timerState.elapsedSeconds
-    };
+  const start = useCallback(async (projectId: string) => {
+    if (!enabled) return;
+    const state = await timerAPI.start(projectId);
+    setServerState(state);
+  }, [enabled]);
 
-    reset();
-    return result;
-  }, [timerState.projectId, timerState.elapsedSeconds, reset]);
+  const pause = useCallback(async () => {
+    if (!enabled) return;
+    const state = await timerAPI.pause();
+    setServerState(state);
+  }, [enabled]);
+
+  const stop = useCallback(async (projectId: string, description: string) => {
+    if (!enabled) return null;
+    const result = await timerAPI.stop(projectId, description);
+    if (result?.state) {
+      setServerState(result.state);
+    }
+    return result?.entry || null;
+  }, [enabled]);
 
   return {
     timerState,
+    pausedTimers,
     start,
     pause,
-    reset,
-    stop
+    stop,
+    syncState
   };
 }
 

@@ -1,17 +1,19 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from '../database/index.js';
-import { TimeEntry, CreateTimeEntryRequest, UpdateTimeEntryRequest } from '../types/index.js';
-import { convertSecondsToCentesimal, convertMinutesToCentesimal } from '../utils/helpers.js';
+import { CreateTimeEntryRequest, UpdateTimeEntryRequest } from '../types/index.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 
 /**
  * Obtener todos los registros de tiempo
  */
 export async function getAllTimeEntries(req: Request, res: Response): Promise<void> {
   try {
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
     const entries = await db.all<any[]>(
-      'SELECT * FROM time_entries ORDER BY created_at DESC'
+      'SELECT * FROM time_entries WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
     );
 
     // Convertir nombres de columnas de snake_case a camelCase
@@ -39,11 +41,12 @@ export async function getAllTimeEntries(req: Request, res: Response): Promise<vo
 export async function getTimeEntriesByProject(req: Request, res: Response): Promise<void> {
   try {
     const { projectId } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
     const entries = await db.all<any[]>(
-      'SELECT * FROM time_entries WHERE project_id = ? ORDER BY created_at DESC',
-      [projectId]
+      'SELECT * FROM time_entries WHERE user_id = ? AND project_id = ? ORDER BY created_at DESC',
+      [userId, projectId]
     );
 
     const formattedEntries = entries.map(e => ({
@@ -77,6 +80,7 @@ export async function createTimeEntry(req: Request, res: Response): Promise<void
       durationCentesimal,
       description = ''
     } = req.body as CreateTimeEntryRequest;
+    const userId = (req as AuthenticatedRequest).user.id;
 
     // Validación básica
     if (!projectId || !startTime || !endTime || duration === undefined) {
@@ -88,8 +92,8 @@ export async function createTimeEntry(req: Request, res: Response): Promise<void
 
     // Verificar que el proyecto existe
     const project = await db.get(
-      'SELECT id FROM projects WHERE id = ?',
-      [projectId]
+      'SELECT id FROM projects WHERE id = ? AND user_id = ?',
+      [projectId, userId]
     );
 
     if (!project) {
@@ -102,14 +106,14 @@ export async function createTimeEntry(req: Request, res: Response): Promise<void
 
     await db.run(
       `INSERT INTO time_entries 
-       (id, project_id, start_time, end_time, duration, duration_centesimal, description, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, projectId, startTime, endTime, duration, durationCentesimal, description, now]
+       (id, user_id, project_id, start_time, end_time, duration, duration_centesimal, description, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, projectId, startTime, endTime, duration, durationCentesimal, description, now]
     );
 
     const entry = await db.get<any>(
-      'SELECT * FROM time_entries WHERE id = ?',
-      [id]
+      'SELECT * FROM time_entries WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     res.status(201).json({
@@ -135,11 +139,12 @@ export async function updateTimeEntry(req: Request, res: Response): Promise<void
   try {
     const { id } = req.params;
     const { duration, durationCentesimal, description, endTime } = req.body as UpdateTimeEntryRequest;
+    const userId = (req as AuthenticatedRequest).user.id;
 
     const db = getDb();
     const entry = await db.get<any>(
-      'SELECT * FROM time_entries WHERE id = ?',
-      [id]
+      'SELECT * FROM time_entries WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!entry) {
@@ -174,15 +179,16 @@ export async function updateTimeEntry(req: Request, res: Response): Promise<void
     }
 
     updateValues.push(id);
+    updateValues.push(userId);
 
     await db.run(
-      `UPDATE time_entries SET ${updateFields.join(', ')} WHERE id = ?`,
+      `UPDATE time_entries SET ${updateFields.join(', ')} WHERE id = ? AND user_id = ?`,
       updateValues
     );
 
     const updated = await db.get<any>(
-      'SELECT * FROM time_entries WHERE id = ?',
-      [id]
+      'SELECT * FROM time_entries WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     res.json({
@@ -207,11 +213,12 @@ export async function updateTimeEntry(req: Request, res: Response): Promise<void
 export async function deleteTimeEntry(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
     const entry = await db.get(
-      'SELECT id FROM time_entries WHERE id = ?',
-      [id]
+      'SELECT id FROM time_entries WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!entry) {
@@ -219,7 +226,7 @@ export async function deleteTimeEntry(req: Request, res: Response): Promise<void
       return;
     }
 
-    await db.run('DELETE FROM time_entries WHERE id = ?', [id]);
+    await db.run('DELETE FROM time_entries WHERE id = ? AND user_id = ?', [id, userId]);
 
     res.json({ message: 'Registro eliminado correctamente' });
   } catch (error) {

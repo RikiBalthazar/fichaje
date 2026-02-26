@@ -21,19 +21,30 @@ export async function initDb(): Promise<Database> {
 
   // Crear tablas
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       name TEXT NOT NULL,
       description TEXT,
       total_minutes INTEGER DEFAULT 0,
       is_active INTEGER DEFAULT 1,
       order_index INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS time_entries (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       project_id TEXT NOT NULL,
       start_time TEXT NOT NULL,
       end_time TEXT NOT NULL,
@@ -41,16 +52,33 @@ export async function initDb(): Promise<Database> {
       duration_centesimal TEXT NOT NULL,
       description TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS description_templates (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       name TEXT NOT NULL,
       description TEXT NOT NULL,
       order_index INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS project_timers (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      accumulated_seconds INTEGER DEFAULT 0,
+      started_at TEXT,
+      is_running INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (user_id, project_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_time_entries_project_id 
@@ -58,6 +86,18 @@ export async function initDb(): Promise<Database> {
     
     CREATE INDEX IF NOT EXISTS idx_time_entries_created_at 
       ON time_entries(created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_projects_user_id
+      ON projects(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_time_entries_user_id
+      ON time_entries(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_templates_user_id
+      ON description_templates(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_project_timers_user_id
+      ON project_timers(user_id);
   `);
 
   // Migrations: agregar columnas si no existen
@@ -69,6 +109,24 @@ export async function initDb(): Promise<Database> {
 
   try {
     await db.exec('ALTER TABLE projects ADD COLUMN order_index INTEGER DEFAULT 0');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE projects ADD COLUMN user_id TEXT');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE time_entries ADD COLUMN user_id TEXT');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE description_templates ADD COLUMN user_id TEXT');
   } catch (e) {
     // Column already exists
   }

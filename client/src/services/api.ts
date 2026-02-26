@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Project, TimeEntry, DescriptionTemplate } from '../types';
+import { Project, TimeEntry, DescriptionTemplate, AuthResponse, TimerStateResponse } from '../types';
 
 const API_BASE = '/api';
 
@@ -9,6 +9,36 @@ const api = axios.create({
     'Content-Type': 'application/json',
   }
 });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth API
+export const authAPI = {
+  register: async (email: string, password: string): Promise<AuthResponse> => {
+    const { data } = await api.post('/auth/register', { email, password });
+    return data;
+  },
+
+  login: async (email: string, password: string): Promise<AuthResponse> => {
+    const { data } = await api.post('/auth/login', { email, password });
+    return data;
+  },
+
+  me: async (): Promise<{ user: { id: string; email: string } }> => {
+    const { data } = await api.get('/auth/me');
+    return data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await api.post('/auth/change-password', { currentPassword, newPassword });
+  }
+};
 
 // Projects API
 export const projectsAPI = {
@@ -131,6 +161,29 @@ export const templatesAPI = {
 
   updateOrder: async (templates: { id: string }[]): Promise<void> => {
     await api.post('/templates/order', { templates });
+  }
+};
+
+// Timer API
+export const timerAPI = {
+  getState: async (): Promise<TimerStateResponse> => {
+    const { data } = await api.get('/timer/state');
+    return data;
+  },
+
+  start: async (projectId: string): Promise<TimerStateResponse> => {
+    const { data } = await api.post('/timer/start', { projectId });
+    return data;
+  },
+
+  pause: async (): Promise<TimerStateResponse> => {
+    const { data } = await api.post('/timer/pause');
+    return data;
+  },
+
+  stop: async (projectId: string, description: string): Promise<{ entry: TimeEntry; state: TimerStateResponse }> => {
+    const { data } = await api.post('/timer/stop', { projectId, description });
+    return data;
   }
 };
 

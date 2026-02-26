@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getDb } from '../database/index.js';
 import { generateExportContent } from '../utils/helpers.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 
 /**
  * Exportar datos a TXT
@@ -12,14 +13,15 @@ import { generateExportContent } from '../utils/helpers.js';
 export async function exportToTxt(req: Request, res: Response): Promise<void> {
   try {
     const db = getDb();
+    const userId = (req as AuthenticatedRequest).user.id;
     const { projectId, dateFrom, dateTo } = req.query as Record<string, string>;
 
     // Obtener todos los proyectos
-    const projects = await db.all('SELECT id, name FROM projects');
+    const projects = await db.all('SELECT id, name FROM projects WHERE user_id = ?', [userId]);
 
     // Construir query con filtros
-    let query = 'SELECT * FROM time_entries WHERE 1=1';
-    const params: any[] = [];
+    let query = 'SELECT * FROM time_entries WHERE user_id = ?';
+    const params: any[] = [userId];
 
     if (projectId) {
       query += ' AND project_id = ?';

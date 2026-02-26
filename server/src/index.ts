@@ -2,10 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import { initDb, closeDb } from './database/index.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { requireAuth } from './middleware/auth.js';
 import projectsRouter from './routes/projects.js';
 import timeEntriesRouter from './routes/timeEntries.js';
 import exportRouter from './routes/export.js';
 import templatesRouter from './routes/templates.js';
+import authRouter from './routes/auth.js';
+import timerRouter from './routes/timer.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,13 +18,15 @@ app.use(cors());
 app.use(express.json());
 
 // Rutas
-app.use('/api/projects', projectsRouter);
-app.use('/api/time-entries', timeEntriesRouter);
-app.use('/api/export', exportRouter);
-app.use('/api/templates', templatesRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/projects', requireAuth, projectsRouter);
+app.use('/api/time-entries', requireAuth, timeEntriesRouter);
+app.use('/api/export', requireAuth, exportRouter);
+app.use('/api/templates', requireAuth, templatesRouter);
+app.use('/api/timer', requireAuth, timerRouter);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

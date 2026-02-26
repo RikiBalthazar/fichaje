@@ -1,5 +1,6 @@
 export interface Project {
   id: string;
+  user_id?: string | null;
   name: string;
   description: string;
   total_minutes: number;
@@ -11,6 +12,7 @@ export interface Project {
 
 export interface TimeEntry {
   id: string;
+  user_id?: string | null;
   project_id: string;
   start_time: string;
   end_time: string;
@@ -48,6 +50,7 @@ export interface UpdateTimeEntryRequest {
 
 export interface DescriptionTemplate {
   id: string;
+  user_id?: string | null;
   name: string;
   description: string;
   order_index: number;
@@ -63,4 +66,24 @@ export interface CreateDescriptionTemplateRequest {
 export interface UpdateDescriptionTemplateRequest {
   name?: string;
   description?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  password_hash: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimerState {
+  active: {
+    projectId: string;
+    startedAt: string;
+    accumulatedSeconds: number;
+  } | null;
+  paused: Array<{
+    projectId: string;
+    accumulatedSeconds: number;
+  }>;
 }

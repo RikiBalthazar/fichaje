@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from '../database/index.js';
 import { Project, CreateProjectRequest, UpdateProjectRequest } from '../types/index.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 import { calculateTotalMinutes } from '../utils/helpers.js';
 
 /**
@@ -9,17 +10,19 @@ import { calculateTotalMinutes } from '../utils/helpers.js';
  */
 export async function getAllProjects(req: Request, res: Response): Promise<void> {
   try {
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
     const projects = await db.all<any[]>(
-      'SELECT * FROM projects WHERE is_active = 1 ORDER BY order_index ASC, created_at DESC'
+      'SELECT * FROM projects WHERE user_id = ? AND is_active = 1 ORDER BY order_index ASC, created_at DESC',
+      [userId]
     );
     
     // Calcular minutos totales actualizados para cada proyecto
     const projectsWithTotals = await Promise.all(
       projects.map(async (project) => {
         const entries = await db.all(
-          'SELECT duration FROM time_entries WHERE project_id = ?',
-          [project.id]
+          'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+          [userId, project.id]
         );
         const totalMinutes = calculateTotalMinutes(entries);
         return {
@@ -45,17 +48,19 @@ export async function getAllProjects(req: Request, res: Response): Promise<void>
  */
 export async function getAllProjectsWithInactive(req: Request, res: Response): Promise<void> {
   try {
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
     const projects = await db.all<any[]>(
-      'SELECT * FROM projects ORDER BY order_index ASC, created_at DESC'
+      'SELECT * FROM projects WHERE user_id = ? ORDER BY order_index ASC, created_at DESC',
+      [userId]
     );
     
     // Calcular minutos totales actualizados para cada proyecto
     const projectsWithTotals = await Promise.all(
       projects.map(async (project) => {
         const entries = await db.all(
-          'SELECT duration FROM time_entries WHERE project_id = ?',
-          [project.id]
+          'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+          [userId, project.id]
         );
         const totalMinutes = calculateTotalMinutes(entries);
         return {
@@ -82,10 +87,11 @@ export async function getAllProjectsWithInactive(req: Request, res: Response): P
 export async function getProjectById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
     const project = await db.get<Project>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!project) {
@@ -94,8 +100,8 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
     }
 
     const entries = await db.all(
-      'SELECT duration FROM time_entries WHERE project_id = ?',
-      [id]
+      'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+      [userId, id]
     );
     const totalMinutes = calculateTotalMinutes(entries);
 
@@ -112,6 +118,7 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
 export async function createProject(req: Request, res: Response): Promise<void> {
   try {
     const { name, description = '' } = req.body as CreateProjectRequest;
+    const userId = (req as AuthenticatedRequest).user.id;
 
     if (!name || !name.trim()) {
       res.status(400).json({ error: 'El nombre del proyecto es requerido' });
@@ -123,13 +130,13 @@ export async function createProject(req: Request, res: Response): Promise<void> 
     const db = getDb();
 
     await db.run(
-      'INSERT INTO projects (id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-      [id, name.trim(), description.trim(), now, now]
+      'INSERT INTO projects (id, user_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, userId, name.trim(), description.trim(), now, now]
     );
 
     const project = await db.get<Project>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     res.status(201).json({ ...project, totalMinutes: 0 });
@@ -146,11 +153,12 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const { name, description } = req.body as UpdateProjectRequest;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
     const project = await db.get<Project>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!project) {
@@ -160,18 +168,18 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
 
     const now = new Date().toISOString();
     await db.run(
-      'UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ?',
-      [name || project.name, description !== undefined ? description : project.description, now, id]
+      'UPDATE projects SET name = ?, description = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [name || project.name, description !== undefined ? description : project.description, now, id, userId]
     );
 
     const updated = await db.get<Project>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     const entries = await db.all(
-      'SELECT duration FROM time_entries WHERE project_id = ?',
-      [id]
+      'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+      [userId, id]
     );
     const totalMinutes = calculateTotalMinutes(entries);
 
@@ -188,11 +196,12 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
 export async function deleteProject(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
     const project = await db.get<Project>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!project) {
@@ -201,7 +210,7 @@ export async function deleteProject(req: Request, res: Response): Promise<void> 
     }
 
     // Eliminar también todos los time entries asociados (por cascada)
-    await db.run('DELETE FROM projects WHERE id = ?', [id]);
+    await db.run('DELETE FROM projects WHERE id = ? AND user_id = ?', [id, userId]);
 
     res.json({ message: 'Proyecto eliminado correctamente' });
   } catch (error) {
@@ -216,6 +225,7 @@ export async function deleteProject(req: Request, res: Response): Promise<void> 
 export async function updateProjectsOrder(req: Request, res: Response): Promise<void> {
   try {
     const { projects } = req.body;
+    const userId = (req as AuthenticatedRequest).user.id;
     
     if (!Array.isArray(projects)) {
       res.status(400).json({ error: 'projects debe ser un array' });
@@ -227,8 +237,8 @@ export async function updateProjectsOrder(req: Request, res: Response): Promise<
     // Actualizar order_index para cada proyecto
     for (let i = 0; i < projects.length; i++) {
       await db.run(
-        'UPDATE projects SET order_index = ? WHERE id = ?',
-        [i, projects[i].id]
+        'UPDATE projects SET order_index = ? WHERE id = ? AND user_id = ?',
+        [i, projects[i].id, userId]
       );
     }
 
@@ -245,11 +255,12 @@ export async function updateProjectsOrder(req: Request, res: Response): Promise<
 export async function toggleProjectActive(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    const userId = (req as AuthenticatedRequest).user.id;
     const db = getDb();
 
     const project = await db.get<any>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     if (!project) {
@@ -262,18 +273,18 @@ export async function toggleProjectActive(req: Request, res: Response): Promise<
     const updatedAt = new Date().toISOString();
 
     await db.run(
-      'UPDATE projects SET is_active = ?, updated_at = ? WHERE id = ?',
-      [newIsActive, updatedAt, id]
+      'UPDATE projects SET is_active = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+      [newIsActive, updatedAt, id, userId]
     );
 
     const updated = await db.get<any>(
-      'SELECT * FROM projects WHERE id = ?',
-      [id]
+      'SELECT * FROM projects WHERE id = ? AND user_id = ?',
+      [id, userId]
     );
 
     const entries = await db.all(
-      'SELECT duration FROM time_entries WHERE project_id = ?',
-      [id]
+      'SELECT duration FROM time_entries WHERE user_id = ? AND project_id = ?',
+      [userId, id]
     );
     const totalMinutes = calculateTotalMinutes(entries);
 

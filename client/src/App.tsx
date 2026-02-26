@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Project, TimeEntry } from './types';
+import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
-import { projectsAPI, timeEntriesAPI } from './services/api';
-import { convertSecondsToCentesimal } from './utils/time';
+import { projectsAPI, timeEntriesAPI, authAPI } from './services/api';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
 import { AdminView } from './components/AdminView';
 import { ExportView } from './components/ExportView';
 import { SettingsModal } from './components/SettingsModal';
 import { DashboardModal } from './components/DashboardModal';
+import { AuthView } from './components/AuthView';
+import { AccountModal } from './components/AccountModal';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
 
 function App() {
@@ -16,6 +17,10 @@ function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]); // Incluyendo inactivos
   const [loading, setLoading] = useState(true);
+
+  // Auth
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Estado de registros de tiempo
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -28,6 +33,7 @@ function App() {
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   // Toast notifications
@@ -36,23 +42,40 @@ function App() {
   // Description drafts por proyecto (mientras timer está corriendo)
   const [descriptionDrafts, setDescriptionDrafts] = useState<{ [projectId: string]: string }>({});
 
-  // Timers pausados por proyecto
-  const [pausedTimers, setPausedTimers] = useState<{
-    [projectId: string]: { elapsedSeconds: number; pausedAt: number };
-  }>({});
-
   // Drag and drop state
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
 
   // Timer state
-  const { timerState, start, reset, stop } = useTimer();
+  const { timerState, pausedTimers, start, pause, stop } = useTimer(Boolean(user));
 
-  // Cargar proyectos al montar
   useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        const { user: currentUser } = await authAPI.me();
+        setUser(currentUser);
+      } catch (error) {
+        localStorage.removeItem('authToken');
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Cargar proyectos al autenticar
+  useEffect(() => {
+    if (!user) return;
     loadProjects();
     loadEntries();
-  }, []);
+  }, [user]);
 
   const loadProjects = async () => {
     try {
@@ -74,29 +97,6 @@ function App() {
     } catch (error) {
       console.error('Error loading entries:', error);
     }
-  };
-
-  const isSameDay = (timestampA: number, timestampB: number) => {
-    const dateA = new Date(timestampA);
-    const dateB = new Date(timestampB);
-    return (
-      dateA.getFullYear() === dateB.getFullYear() &&
-      dateA.getMonth() === dateB.getMonth() &&
-      dateA.getDate() === dateB.getDate()
-    );
-  };
-
-  const pauseCurrentTimer = () => {
-    if (!timerState.projectId || !timerState.isRunning) return;
-    const pausedAt = Date.now();
-    setPausedTimers(prev => ({
-      ...prev,
-      [timerState.projectId as string]: {
-        elapsedSeconds: timerState.elapsedSeconds,
-        pausedAt
-      }
-    }));
-    reset();
   };
 
   // Drag and Drop handlers
@@ -182,40 +182,24 @@ function App() {
   };
 
   const handlePlayProject = async (projectId: string) => {
-    // Si hay otro proyecto activo, pausarlo sin cerrar la sesion
-    if (timerState.projectId && timerState.projectId !== projectId && timerState.isRunning) {
-      pauseCurrentTimer();
+    try {
+      const wasPaused = Boolean(pausedTimers[projectId]);
+      await start(projectId);
+      showToast(wasPaused ? 'Cronómetro reanudado' : 'Cronómetro iniciado', 'success');
+    } catch (error) {
+      console.error('Error starting timer:', error);
+      showToast('Error al iniciar cronómetro', 'error');
     }
-
-    const paused = pausedTimers[projectId];
-    if (paused) {
-      if (isSameDay(paused.pausedAt, Date.now())) {
-        start(projectId, paused.elapsedSeconds);
-        showToast('Cronómetro reanudado', 'success');
-      } else {
-        await saveStoppedEntry(
-          { projectId, elapsedSeconds: paused.elapsedSeconds },
-          paused.pausedAt
-        );
-        start(projectId);
-        showToast('Sesión anterior cerrada. Nuevo cronómetro iniciado', 'info');
-      }
-
-      setPausedTimers(prev => {
-        const next = { ...prev };
-        delete next[projectId];
-        return next;
-      });
-      return;
-    }
-
-    start(projectId);
-    showToast('Cronómetro iniciado', 'success');
   };
 
-  const handlePauseProject = () => {
-    pauseCurrentTimer();
-    showToast('Cronómetro pausado', 'warning');
+  const handlePauseProject = async () => {
+    try {
+      await pause();
+      showToast('Cronómetro pausado', 'warning');
+    } catch (error) {
+      console.error('Error pausing timer:', error);
+      showToast('Error al pausar cronómetro', 'error');
+    }
   };
 
   const handleSaveDescriptionDraft = (projectId: string, description: string) => {
@@ -226,73 +210,46 @@ function App() {
     }));
   };
 
-  const saveStoppedEntry = async (
-    result: { projectId: string; elapsedSeconds: number },
-    endedAt: number = Date.now()
-  ) => {
+  const handleStopProject = async () => {
+    if (!timerState.projectId) return;
+    const description = descriptionDrafts[timerState.projectId] || '';
+
     try {
-      const durationCentesimal = convertSecondsToCentesimal(result.elapsedSeconds);
-
-      // Usar el draft de descripción si existe
-      const description = descriptionDrafts[result.projectId] || '';
-
-      const newEntry: TimeEntry = {
-        id: crypto.randomUUID(),
-        projectId: result.projectId,
-        startTime: new Date(endedAt - result.elapsedSeconds * 1000).toISOString(),
-        endTime: new Date(endedAt).toISOString(),
-        duration: result.elapsedSeconds,
-        durationCentesimal,
-        description,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Guardar en backend
-      await timeEntriesAPI.create({
-        projectId: newEntry.projectId,
-        startTime: newEntry.startTime,
-        endTime: newEntry.endTime || new Date().toISOString(),
-        duration: newEntry.duration,
-        durationCentesimal: newEntry.durationCentesimal,
-        description: newEntry.description || '',
-      });
-
-      // Limpiar el draft
-      setDescriptionDrafts(prev => {
-        const newDrafts = { ...prev };
-        delete newDrafts[result.projectId];
-        return newDrafts;
-      });
-
-      // Actualizar proyectos
-      await loadProjects();
-      await loadEntries();
-
-      showToast(`Registrado: ${durationCentesimal} horas (centesimal)`, 'success');
+      const entry = await stop(timerState.projectId, description);
+      if (entry) {
+        setDescriptionDrafts(prev => {
+          const next = { ...prev };
+          delete next[timerState.projectId as string];
+          return next;
+        });
+        await loadProjects();
+        await loadEntries();
+        showToast(`Registrado: ${entry.durationCentesimal} horas (centesimal)`, 'success');
+      }
     } catch (error) {
       console.error('Error stopping timer:', error);
       showToast('Error al guardar tiempo', 'error');
     }
   };
 
-  const handleStopProject = async () => {
-    const result = stop();
-    if (!result) return;
-    await saveStoppedEntry(result);
-  };
-
   const handleStopPausedProject = async (projectId: string) => {
-    const paused = pausedTimers[projectId];
-    if (!paused) return;
-    await saveStoppedEntry(
-      { projectId, elapsedSeconds: paused.elapsedSeconds },
-      paused.pausedAt
-    );
-    setPausedTimers(prev => {
-      const next = { ...prev };
-      delete next[projectId];
-      return next;
-    });
+    const description = descriptionDrafts[projectId] || '';
+    try {
+      const entry = await stop(projectId, description);
+      if (entry) {
+        setDescriptionDrafts(prev => {
+          const next = { ...prev };
+          delete next[projectId];
+          return next;
+        });
+        await loadProjects();
+        await loadEntries();
+        showToast(`Registrado: ${entry.durationCentesimal} horas (centesimal)`, 'success');
+      }
+    } catch (error) {
+      console.error('Error stopping paused timer:', error);
+      showToast('Error al guardar tiempo', 'error');
+    }
   };
 
   const handleCreateProject = async (name: string, description: string) => {
@@ -355,6 +312,28 @@ function App() {
     setEditingProject(undefined);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setUser(null);
+    setProjects([]);
+    setAllProjects([]);
+    setEntries([]);
+    setDescriptionDrafts({});
+    setShowAccount(false);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthView onAuthSuccess={setUser} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -374,6 +353,12 @@ function App() {
               <p className="text-gray-600 mt-1">Sistema moderno de seguimiento de horas</p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={() => setShowAccount(true)}
+                className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition"
+              >
+                Cuenta
+              </button>
               <button
                 onClick={handleOpenProjectForm}
                 className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition"
@@ -441,7 +426,7 @@ function App() {
                 elapsedSeconds={
                   timerState.projectId === project.id ? timerState.elapsedSeconds : 0
                 }
-                pausedElapsedSeconds={pausedTimers[project.id]?.elapsedSeconds || 0}
+                pausedElapsedSeconds={pausedTimers[project.id] || 0}
                 onPlay={handlePlayProject}
                 onPause={handlePauseProject}
                 onStop={handleStopProject}
@@ -628,6 +613,16 @@ function App() {
         entries={entries}
         projects={projects}
       />
+
+      {user && (
+        <AccountModal
+          isOpen={showAccount}
+          onClose={() => setShowAccount(false)}
+          user={user}
+          onLogout={handleLogout}
+          onPasswordChanged={() => showToast('Contrasena actualizada', 'success')}
+        />
+      )}
 
       {/* Toast Notification */}
       {toast && (
