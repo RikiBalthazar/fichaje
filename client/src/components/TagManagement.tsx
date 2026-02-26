@@ -43,7 +43,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
     try {
       const response = await fetch('/api/tags', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       if (response.ok) {
@@ -64,7 +64,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           name: newTagName.trim(),
@@ -98,7 +98,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           name: editName.trim(),
@@ -126,7 +126,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({ onTagsChange }) =>
       const response = await fetch(`/api/tags/${tagId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
 

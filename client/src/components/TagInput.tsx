@@ -34,7 +34,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       try {
         const response = await fetch('/api/tags', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
           }
         });
         if (response.ok) {
