@@ -34,6 +34,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   // Toast notifications
@@ -346,60 +348,178 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">⏱️ Control de Partes</h1>
-              <p className="text-gray-600 mt-1">Sistema moderno de seguimiento de horas</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">⏱️ Control de Partes</h1>
+              <p className="text-gray-600 mt-0.5 text-sm hidden sm:block">Sistema moderno de seguimiento de horas</p>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAccount(true)}
-                className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition"
-              >
-                Cuenta
-              </button>
+            
+            {/* Desktop Menu */}
+            <div className="hidden md:flex gap-2 items-center">
               <button
                 onClick={handleOpenProjectForm}
-                className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition"
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition text-sm"
               >
                 ➕ Nuevo Proyecto
               </button>
               <button
                 onClick={() => setShowDashboard(true)}
-                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition"
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition text-sm"
               >
                 📊 Dashboard
               </button>
               <button
-                onClick={() => setShowSettings(true)}
-                className="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold transition"
+                onClick={handleExportTxt}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition text-sm"
               >
-                ⚙️ Plantillas
+                📥 Exportar
+              </button>
+              
+              {/* Settings Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                >
+                  ⚙️ Configuración
+                  <span className="text-xs">{showSettingsDropdown ? '▲' : '▼'}</span>
+                </button>
+                
+                {showSettingsDropdown && (
+                  <>
+                    {/* Backdrop para cerrar el dropdown */}
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowSettingsDropdown(false)}
+                    />
+                    
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
+                      <button
+                        onClick={() => {
+                          setShowAccount(true);
+                          setShowSettingsDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm flex items-center gap-2"
+                      >
+                        👤 Mi Cuenta
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowSettings(true);
+                          setShowSettingsDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm flex items-center gap-2"
+                      >
+                        📝 Plantillas
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowProjectManager(true);
+                          loadAllProjectsIncludingInactive();
+                          setShowSettingsDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm flex items-center gap-2"
+                      >
+                        🏢 Config. Proyectos
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAdminView(true);
+                          setShowSettingsDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm flex items-center gap-2"
+                      >
+                        📋 Administración
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden px-3 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg"
+            >
+              <span className="text-xl">{showMobileMenu ? '✕' : '☰'}</span>
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden mt-4 pb-2 border-t border-gray-200 pt-4 space-y-2">
+              <button
+                onClick={() => {
+                  handleOpenProjectForm();
+                  setShowMobileMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold text-sm"
+              >
+                ➕ Nuevo Proyecto
               </button>
               <button
                 onClick={() => {
-                  setShowProjectManager(true);
-                  loadAllProjectsIncludingInactive();
+                  setShowDashboard(true);
+                  setShowMobileMenu(false);
                 }}
-                className="px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold transition"
+                className="w-full text-left px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold text-sm"
               >
-                🏢 Proyectos
+                📊 Dashboard
               </button>
               <button
-                onClick={() => setShowAdminView(true)}
-                className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold transition"
+                onClick={() => {
+                  handleExportTxt();
+                  setShowMobileMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm"
               >
-                📋 Administración
+                📥 Exportar
               </button>
-              <button
-                onClick={handleExportTxt}
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition"
-              >
-                📥 Exportar TXT
-              </button>
+              
+              <div className="border-t border-gray-200 pt-2 mt-2">
+                <div className="text-xs text-gray-500 px-4 py-1 font-semibold">CONFIGURACIÓN</div>
+                <button
+                  onClick={() => {
+                    setShowAccount(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
+                >
+                  👤 Mi Cuenta
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSettings(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
+                >
+                  📝 Plantillas
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProjectManager(true);
+                    loadAllProjectsIncludingInactive();
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
+                >
+                  🏢 Config. Proyectos
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAdminView(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
+                >
+                  📋 Administración
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
