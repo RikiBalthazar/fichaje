@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useWorkingHoursAlert } from './hooks/useWorkingHoursAlert';
 import { projectsAPI, timeEntriesAPI, authAPI } from './services/api';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
@@ -366,6 +367,46 @@ function App() {
     onToggleHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
     projectIds: projects.map(p => p.id),
     isAnyModalOpen: showProjectForm || showAdminView || showExportView || showProjectManager || showSettings || showDashboard || showAccount || showKeyboardHelp || deleteProjectId !== null
+  });
+
+  // Calcular minutos trabajados hoy para alerta de horas
+  const calculateTodayMinutes = () => {
+    if (!entries || entries.length === 0) return 0;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const minutesToday = entries.reduce((total, entry) => {
+      // Usar createdAt para determinar si fue hoy
+      const entryDate = new Date(entry.createdAt);
+      entryDate.setHours(0, 0, 0, 0);
+      
+      if (entryDate.getTime() === today.getTime()) {
+        // Convertir duration (segundos) a minutos
+        const minutes = Math.floor(entry.duration / 60);
+        return total + minutes;
+      }
+      return total;
+    }, 0);
+    
+    console.log(`📊 Minutos trabajados hoy: ${minutesToday} (${Math.floor(minutesToday / 60)}h ${minutesToday % 60}m)`);
+    return minutesToday;
+  };
+
+  // Working hours alert hook
+  useWorkingHoursAlert({
+    elapsedSeconds: timerState.isRunning ? timerState.elapsedSeconds : 0,
+    totalMinutesToday: calculateTodayMinutes(),
+    timerRunning: timerState.isRunning,
+    onAlert: (message) => {
+      console.log('🔔 Alert callback:', message);
+      setToastMessage({
+        id: Date.now().toString(),
+        message,
+        type: 'warning',
+        duration: 0 // No auto-dismiss para alertas críticas
+      });
+    }
   });
 
   if (authLoading) {
