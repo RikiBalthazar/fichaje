@@ -102,10 +102,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, project, onClo
           <TagInput
             tags={tags}
             onChange={setTags}
-            placeholder="Agregar tags (ej: Backend, Frontend...)"
+            placeholder="Escribe y presiona Enter para crear un tag..."
           />
           <p className="text-xs text-gray-500 mt-1">
-            Presiona Enter para agregar. Sugerencias: Backend, Frontend, Reunión, Admin, QA, Diseño, Marketing, Soporte
+            💡 Puedes crear tags personalizados o usar las sugerencias. Presiona Enter para agregar.
           </p>
         </div>
 

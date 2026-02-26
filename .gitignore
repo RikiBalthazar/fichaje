@@ -18,3 +18,8 @@ pnpm-debug.log*
 .cache/
 coverage/
 .turbo/
+
+# Deploy configuration (sensitive data)
+.deploy-config.json
+deploy.ps1
+deploy.sh

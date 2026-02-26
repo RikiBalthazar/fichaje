@@ -93,7 +93,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       />
 
       {/* Suggestions Dropdown */}
-      {showSuggestions && filteredSuggestions.length > 0 && (
+      {showSuggestions && (filteredSuggestions.length > 0 || inputValue.trim()) && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {filteredSuggestions.map((suggestion) => (
             <button
@@ -107,6 +107,23 @@ export const TagInput: React.FC<TagInputProps> = ({
               </span>
             </button>
           ))}
+          
+          {/* Create new tag option */}
+          {inputValue.trim() && !tags.includes(inputValue.trim()) && (
+            <button
+              onClick={() => addTag(inputValue)}
+              type="button"
+              className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-t border-gray-200"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600 font-semibold">+</span>
+                <span className="text-gray-600">Crear tag:</span>
+                <span className={`inline-block px-2 py-1 rounded text-sm ${DEFAULT_COLOR}`}>
+                  {inputValue.trim()}
+                </span>
+              </div>
+            </button>
+          )}
         </div>
       )}
     </div>

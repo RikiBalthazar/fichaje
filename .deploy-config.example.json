@@ -1,0 +1,16 @@
+{
+  "vps": {
+    "host": "your-vps-ip-or-domain",
+    "user": "deploy-user",
+    "projectPath": "/opt/your-project",
+    "pm2Process": "your-pm2-process-name"
+  },
+  "github": {
+    "repo": "git@github.com:YourUsername/your-repo.git",
+    "branch": "main"
+  },
+  "local": {
+    "clientPath": "client",
+    "serverPath": "server"
+  }
+}
