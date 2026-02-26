@@ -4,6 +4,14 @@
 
 ---
 
+## ✅ PROGRESO GENERAL
+- ✅ Sprint 1: 100% Completo (1/1 features)
+- 🔄 Sprint 2: En progreso
+- ❌ Sprint 3: No iniciado
+- ❌ Sprint 4: No iniciado
+
+---
+
 ## ✅ SPRINTS PLANIFICADOS
 
 ### 🚀 **SPRINT 1: PRODUCTIVIDAD INMEDIATA** (Semana 1-2)
@@ -33,7 +41,7 @@
 
 ---
 
-#### 2️⃣ **Proyectos Favoritos/Recientes** - PRIORIDAD 🟡 ALTA
+#### 2️⃣ **Proyectos Favoritos/Recientes** - ❌ NO INICIADO
 **Descripción:** Ordenar proyectos por favoritos y acceso rápido
 - [ ] Icono de pin (⭐) en cada tarjeta para marcar favoritos
 - [ ] Actualizarse en tiempo real en el cliente
@@ -52,7 +60,7 @@
 
 ---
 
-#### 3️⃣ **Búsqueda y Filtros Rápidos** - PRIORIDAD 🟡 ALTA
+#### 3️⃣ **Búsqueda y Filtros Rápidos** - ❌ NO INICIADO
 **Descripción:** Encontrar proyectos rápidamente
 - [ ] Barra de búsqueda en header (como Ctrl + K)
 - [ ] Búsqueda por nombre/descripción
@@ -71,7 +79,7 @@
 
 ---
 
-#### 4️⃣ **Tags en Proyectos** - PRIORIDAD 🟡 ALTA
+#### 4️⃣ **Tags en Proyectos** - ❌ NO INICIADO
 **Descripción:** Clasificar proyectos con etiquetas
 - [ ] Campo de tags en formulario de nuevo proyecto (input con pills)
 - [ ] Guardar tags comma-separated o JSON en BD
@@ -93,7 +101,7 @@
 ### 📊 **SPRINT 2: ANALÍTICA Y ALERTAS** (Semana 3-4)
 **Objetivo:** Visualizar datos y alertar sobre límites de tiempo
 
-#### 5️⃣ **Notificaciones y Alertas** - PRIORIDAD 🔴 CRÍTICA
+#### 5️⃣ **Notificaciones y Alertas** - 🟡 EN PROGRESO
 **Descripción:** Alertar cuando se supera límite de horas
 - [ ] Push notification cuando pases de 8:30 horas en un día
   - [ ] Solicitar permiso al usuario
@@ -113,7 +121,7 @@
 
 ---
 
-#### 6️⃣ **Dashboard Mejorado** - PRIORIDAD 🟡 ALTA
+#### 6️⃣ **Dashboard Mejorado** - ❌ NO INICIADO
 **Descripción:** Gráficos y análisis de datos
 - [ ] Gráfico de barras: Horas por proyecto (últimos 7/30 días)
   - [ ] Selector: últimos 7 días / últimos 30 días / este mes
@@ -141,7 +149,7 @@
 
 ---
 
-#### 7️⃣ **Objetivos y Metas por Proyecto** - PRIORIDAD 🟡 MEDIA
+#### 7️⃣ **Objetivos y Metas por Proyecto** - ❌ NO INICIADO
 **Descripción:** Establecer límites de horas por proyecto
 - [ ] Campo opcional al crear/editar proyecto: "Horas objetivo"
 - [ ] Barra de progreso en tarjeta del proyecto
