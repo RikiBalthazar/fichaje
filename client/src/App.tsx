@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { projectsAPI, timeEntriesAPI, authAPI } from './services/api';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
@@ -10,6 +11,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { DashboardModal } from './components/DashboardModal';
 import { AuthView } from './components/AuthView';
 import { AccountModal } from './components/AccountModal';
+import { KeyboardHelp } from './components/KeyboardHelp';
+import { Toast as ToastComponent, ToastMessage } from './components/Toast';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
 
 function App() {
@@ -40,6 +43,10 @@ function App() {
 
   // Toast notifications
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
+
+  // Keyboard help
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Description drafts por proyecto (mientras timer está corriendo)
   const [descriptionDrafts, setDescriptionDrafts] = useState<{ [projectId: string]: string }>({});
@@ -194,6 +201,31 @@ function App() {
     }
   };
 
+  const handleVoiceRecord = () => {
+    const activeProjectId = timerState?.projectId;
+    if (!activeProjectId) {
+      setToastMessage({
+        id: Date.now().toString(),
+        message: '⚠️ No hay proyecto activo',
+        type: 'warning',
+        duration: 3000
+      });
+      return;
+    }
+
+    // Mostrar notificación de atajo activado
+    setToastMessage({
+      id: Date.now().toString(),
+      message: '🎤 Grabación de voz activada - Abre el modal de descripción (Alt + V)',
+      type: 'success',
+      duration: 2000
+    });
+
+    // TODO: En una versión mejorada, esto abrirá el modal de descripción automáticamente
+    // Por ahora simplemente indicamos que el atajo funciona
+    console.log(`🎤 Grabación de voz activada para proyecto ${activeProjectId}`);
+  };
+
   const handlePauseProject = async () => {
     try {
       await pause();
@@ -323,6 +355,17 @@ function App() {
     setDescriptionDrafts({});
     setShowAccount(false);
   };
+
+  // Keyboard shortcuts (después de que todas las funciones están definidas)
+  useKeyboardShortcuts({
+    onPlay: handlePlayProject,
+    onPause: handlePauseProject,
+    onStop: handleStopProject,
+    onVoiceRecord: handleVoiceRecord,
+    onToggleHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
+    projectIds: projects.map(p => p.id),
+    isAnyModalOpen: showProjectForm || showAdminView || showExportView || showProjectManager || showSettings || showDashboard || showAccount || showKeyboardHelp || deleteProjectId !== null
+  });
 
   if (authLoading) {
     return (
@@ -752,6 +795,12 @@ function App() {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Toast Nueva */}
+      <ToastComponent toast={toastMessage} onClose={() => setToastMessage(null)} />
+
+      {/* Keyboard Help Modal */}
+      <KeyboardHelp isOpen={showKeyboardHelp} onClose={() => setShowKeyboardHelp(false)} />
     </div>
   );
 }
