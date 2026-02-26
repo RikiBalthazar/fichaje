@@ -78,6 +78,11 @@ export const projectsAPI = {
   toggleActive: async (id: string): Promise<Project> => {
     const { data } = await api.patch(`/projects/${id}/toggle`);
     return data;
+  },
+
+  toggleFavorite: async (id: string): Promise<Project> => {
+    const { data } = await api.patch(`/projects/${id}/favorite`);
+    return data;
   }
 };
 

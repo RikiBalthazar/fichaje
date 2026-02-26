@@ -16,6 +16,7 @@ interface ProjectCardProps {
   onStop: () => void;
   onStopPaused: (projectId: string) => void;
   onSaveDescriptionDraft: (projectId: string, description: string) => void;
+  onToggleFavorite?: (projectId: string) => void;
   currentDescriptionDraft: string;
   isDragged?: boolean;
   isDragOver?: boolean;
@@ -25,6 +26,7 @@ interface ProjectCardProps {
   onDrop?: (e: React.DragEvent, projectId: string) => void;
   forceOpenDescriptionModal?: boolean;
   onDescriptionModalClose?: () => void;
+  todayMinutes?: number; // Minutos trabajados hoy en este proyecto
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -38,6 +40,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onStop,
   onStopPaused,
   onSaveDescriptionDraft,
+  onToggleFavorite,
   currentDescriptionDraft,
   isDragged = false,
   isDragOver = false,
@@ -47,6 +50,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDrop,
   forceOpenDescriptionModal = false,
   onDescriptionModalClose,
+  todayMinutes = 0,
 }) => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [templates, setTemplates] = useState<DescriptionTemplate[]>([]);
@@ -193,8 +197,39 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       >
         {/* Header */}
         <div className="mb-2">
-          <h3 className="text-base font-bold text-gray-800">{project.name}</h3>
-          <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-gray-800">{project.name}</h3>
+                {/* Favorite Star */}
+                {onToggleFavorite && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(project.id);
+                    }}
+                    className="text-lg hover:scale-110 transition-transform"
+                    title={project.isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                  >
+                    {project.isFavorite ? '⭐' : '☆'}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5">{project.description}</p>
+            </div>
+            {/* Today's Hours Badge */}
+            {todayMinutes > 0 && (
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">
+                  🕐 {formatSecondsHHMM(todayMinutes * 60)} hoy
+                </span>
+                {/* Used Today Indicator */}
+                {project.lastUsedAt && new Date(project.lastUsedAt).toDateString() === new Date().toDateString() && (
+                  <span className="text-xs font-semibold text-blue-600">● Activo hoy</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Time Display - Lado a lado con sesión activa/pausada */}

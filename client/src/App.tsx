@@ -110,6 +110,64 @@ function App() {
     }
   };
 
+  // Calculate today's minutes per project
+  const getTodayMinutesByProject = (): { [projectId: string]: number } => {
+    const today = new Date().toDateString();
+    const todayEntries = entries.filter(entry => 
+      new Date(entry.createdAt).toDateString() === today
+    );
+
+    const minutesByProject: { [projectId: string]: number } = {};
+    todayEntries.forEach(entry => {
+      if (!minutesByProject[entry.projectId]) {
+        minutesByProject[entry.projectId] = 0;
+      }
+      minutesByProject[entry.projectId] += entry.duration;
+    });
+
+    // Add active timer if running
+    if (timerState.isRunning && timerState.projectId) {
+      if (!minutesByProject[timerState.projectId]) {
+        minutesByProject[timerState.projectId] = 0;
+      }
+      minutesByProject[timerState.projectId] += Math.floor(timerState.elapsedSeconds / 60);
+    }
+
+    return minutesByProject;
+  };
+
+  // Sort projects: Favorites → Recent → Rest
+  const sortProjects = (projectsList: Project[]): Project[] => {
+    return [...projectsList].sort((a, b) => {
+      // 1. Favorites first
+      if (a.isFavorite !== b.isFavorite) {
+        return b.isFavorite - a.isFavorite;
+      }
+
+      // 2. Then by lastUsedAt (recent first)
+      if (a.lastUsedAt && b.lastUsedAt) {
+        return new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime();
+      }
+      if (a.lastUsedAt) return -1;
+      if (b.lastUsedAt) return 1;
+
+      // 3. Finally alphabetically
+      return a.name.localeCompare(b.name);
+    });
+  };
+
+  // Handle toggle favorite
+  const handleToggleFavorite = async (projectId: string) => {
+    try {
+      await projectsAPI.toggleFavorite(projectId);
+      await loadProjects();
+      showToast('Favorito actualizado', 'success');
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      showToast('Error al actualizar favorito', 'error');
+    }
+  };
+
   // Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, projectId: string) => {
     setDraggedProjectId(projectId);
@@ -622,32 +680,37 @@ function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                isActive={timerState.projectId === project.id && timerState.isRunning}
-                isPaused={Boolean(pausedTimers[project.id])}
-                elapsedSeconds={
-                  timerState.projectId === project.id ? timerState.elapsedSeconds : 0
-                }
-                pausedElapsedSeconds={pausedTimers[project.id] || 0}
-                onPlay={handlePlayProject}
-                onPause={handlePauseProject}
-                onStop={handleStopProject}
-                onStopPaused={handleStopPausedProject}
-                onSaveDescriptionDraft={handleSaveDescriptionDraft}
-                currentDescriptionDraft={descriptionDrafts[project.id] || ''}
-                isDragged={draggedProjectId === project.id}
-                isDragOver={dragOverProjectId === project.id}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                forceOpenDescriptionModal={descriptionModalProjectId === project.id}
-                onDescriptionModalClose={() => setDescriptionModalProjectId(null)}
-              />
-            ))}
+            {sortProjects(projects).map((project) => {
+              const todayMinutesByProject = getTodayMinutesByProject();
+              return (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  isActive={timerState.projectId === project.id && timerState.isRunning}
+                  isPaused={Boolean(pausedTimers[project.id])}
+                  elapsedSeconds={
+                    timerState.projectId === project.id ? timerState.elapsedSeconds : 0
+                  }
+                  pausedElapsedSeconds={pausedTimers[project.id] || 0}
+                  onPlay={handlePlayProject}
+                  onPause={handlePauseProject}
+                  onStop={handleStopProject}
+                  onStopPaused={handleStopPausedProject}
+                  onSaveDescriptionDraft={handleSaveDescriptionDraft}
+                  onToggleFavorite={handleToggleFavorite}
+                  todayMinutes={todayMinutesByProject[project.id] || 0}
+                  currentDescriptionDraft={descriptionDrafts[project.id] || ''}
+                  isDragged={draggedProjectId === project.id}
+                  isDragOver={dragOverProjectId === project.id}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  forceOpenDescriptionModal={descriptionModalProjectId === project.id}
+                  onDescriptionModalClose={() => setDescriptionModalProjectId(null)}
+                />
+              );
+            })}
           </div>
         )}
       </main>

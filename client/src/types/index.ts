@@ -6,6 +6,8 @@ export interface Project {
   totalMinutes: number;
   isActive: number;
   orderIndex: number;
+  isFavorite: number;
+  lastUsedAt: string | null;
 }
 
 export interface TimeEntry {
