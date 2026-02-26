@@ -126,7 +126,8 @@ function App() {
       if (!minutesByProject[entry.projectId]) {
         minutesByProject[entry.projectId] = 0;
       }
-      minutesByProject[entry.projectId] += entry.duration;
+      // entry.duration está en SEGUNDOS, convertir a minutos
+      minutesByProject[entry.projectId] += Math.floor(entry.duration / 60);
     });
 
     // Add active timer if running
