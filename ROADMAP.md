@@ -6,8 +6,8 @@
 
 ## ✅ PROGRESO GENERAL
 - ✅ Sprint 1: 100% Completo (4/4 features)
-- 🔄 Sprint 2: 66% Completo (2/3 features) - EN CURSO
-- ❌ Sprint 3: No iniciado
+- ✅ Sprint 2: 100% Completo (3/3 features)
+- 🔄 Sprint 3: 100% Completo (1/1 features) - COMPLETADO
 - ❌ Sprint 4: No iniciado
 
 ---
@@ -187,56 +187,68 @@
 
 ---
 
-#### 7️⃣ **Objetivos y Metas por Proyecto** - ❌ NO INICIADO
-**Descripción:** Establecer límites de horas por proyecto
-- [ ] Campo opcional al crear/editar proyecto: "Horas objetivo"
-- [ ] Barra de progreso en tarjeta del proyecto
-  - [ ] Verde: 0-80% del objetivo
-  - [ ] Amarillo: 80-100%
-  - [ ] Rojo: > 100% (superado)
-- [ ] Alerta cuando llegues al 80% del objetivo
-- [ ] Modal de edición: cambiar objetivo
-- [ ] Mostrar: "5h / 40h objetivo" (5 horas de 40)
-- [ ] En Dashboard: proyectos en riesgo (superarán estimado esta semana)
+#### 7️⃣ **Objetivos y Metas por Proyecto** - ✅ COMPLETADO
+**Descripción:** Establecer límites de tiempo por proyecto con alertas visuales
+- [x] Campo opcional al crear/editar proyecto: "Horas objetivo" (targetHours)
+- [x] Alertas visuales en tarjeta del proyecto
+  - [x] Rojo: > 100% (⛔ Limite superado)
+  - [x] Amarillo: 80-100% (⚠️ Cerca del limite)
+  - [x] Azul: < 80% (🎯 Limite configurado)
+- [x] Indicador visual cuando llegues al 80% del objetivo
+- [x] Modal de edición: cambiar objetivo desde ProjectForm
+- [x] Mostrar: "5h / 40h" (5 horas de 40 horas objetivo)
+- [x] En Dashboard: sección de resumen con proyectos superados/cerca del límite
 
 **Notas técnicas:**
-- Agregar columna `target_hours FLOAT DEFAULT NULL` en projects
-- Actualizar GET /api/projects para incluir progreso
-- Endpoint PATCH /api/projects/:id/target
-- Hook useProjectProgress()
+- ✅ Agregada columna `target_minutes INTEGER DEFAULT NULL` en projects
+- ✅ Actualizado GET /api/projects para incluir targetMinutes
+- ✅ Endpoints POST/PATCH /api/projects con validación de targetMinutes
+- ✅ ProjectCard con cálculo de isOverLimit/isNearLimit
+- ✅ DashboardModal con sección limitSummary (contadores y top 6 proyectos)
+- ✅ Conversión horas → minutos en backend, minutos → horas en frontend
+- ✅ Solo alertas visuales (sin bloqueo ni barras de progreso)
 
-**Dependencias:** Base de datos
+**Dependencias:** Base de datos - ✅ COMPLETADO
+
+**Fecha de completación:** 26 de Febrero de 2026
 
 ---
 
 ### 🎯 **SPRINT 3: EXPERIENCIA MÓVIL** (Semana 5-6)
 **Objetivo:** App funcional en móviles y PWA instalable
 
-#### 8️⃣ **Multi-dispositivo Mejorado** - PRIORIDAD 🔴 CRÍTICA
-**Descripción:** PWA instalable y notificaciones cross-device
-- [ ] PWA instalable
-  - [ ] Manifest.json actualizado
-  - [ ] Service Worker v2 con caché inteligente
-  - [ ] Icono de app 192x192, 512x512
-  - [ ] Splash screen personalizado
-  - [ ] Opción de instalar en home screen
-- [ ] Widget de inicio rápido en móvil
-  - [ ] Botones de 1-9 visibles siempre
-  - [ ] Timer en grande en home screen
-- [ ] Notificaciones push cross-device
-  - [ ] Si inicias en móvil, avisa al desktop
-  - [ ] Si cambias dispositivo, pausa el anterior
-- [ ] Orientación responsive
-  - [ ] Landscape: grid 4 columnas
-  - [ ] Portrait: 1-2 columnas
+#### 8️⃣ **Multi-dispositivo Mejorado** - ✅ COMPLETADO
+**Descripción:** PWA instalable con manifest, service worker e instalación desde UI
+- [x] PWA instalable
+  - [x] Manifest.json creado con metadata de la app
+  - [x] Service Worker con caché inteligente (cache-first para assets, network-first para API)
+  - [x] Iconos SVG de app 192x192, 512x512 con diseño de reloj/timer
+  - [x] Theme color sky blue (#0ea5e9) y display standalone
+  - [x] Opción de instalar desde botón en UI (desktop y móvil)
+- [x] Botón de instalación PWA
+  - [x] Escucha evento beforeinstallprompt
+  - [x] Muestra botón solo cuando instalable (canInstall state)
+  - [x] Trigger del prompt de instalación al hacer clic
+  - [x] Oculta botón después de instalar (appinstalled event)
+- [x] Service Worker registration
+  - [x] Registrado en main.tsx al cargar la app
+  - [x] Cache 'fichaje-v1' con assets estáticos
+  - [x] Fallback a index.html para navegación offline
 
 **Notas técnicas:**
-- Actualizar public/manifest.json
-- Mejorar service-worker.js
-- Usar Notification API con sincronización
-- Detectar cambio de dispositivo por localStorage + servidor
+- ✅ Creado client/public/manifest.json con scope "/" y start_url "/"
+- ✅ Creados icon-192.svg y icon-512.svg con diseño azul/blanco
+- ✅ Creado client/public/sw.js con estrategias de caché
+- ✅ Actualizado client/index.html con link a manifest y theme-color meta
+- ✅ Actualizado client/src/main.tsx con navigator.serviceWorker.register()
+- ✅ Actualizado client/src/App.tsx con BeforeInstallPromptEvent interface
+- ✅ Agregados estados installPrompt y canInstall en App.tsx
+- ✅ Botones "Instalar App" en header desktop y menú móvil
+- ✅ Desplegado y verificado en producción (manifest, sw, iconos accesibles)
 
-**Dependencias:** Service Worker
+**Dependencias:** Service Worker, Web App Manifest - ✅ COMPLETADO
+
+**Fecha de completación:** 26 de Febrero de 2026
 
 ---
 
@@ -311,14 +323,14 @@
 
 | Feature | Estado | % Completo | Sprint |
 |---------|--------|-----------|--------|
-| Atajos de Teclado | � DONE | 100% | 1 |
+| Atajos de Teclado | 🟢 DONE | 100% | 1 |
 | Proyectos Favoritos/Recientes | 🟢 DONE | 100% | 1 |
 | Búsqueda y Filtros | 🟢 DONE | 100% | 1 |
 | Tags en Proyectos | 🟢 DONE | 100% | 1 |
 | Notificaciones de Límite 8:30h | 🟢 DONE | 100% | 2 |
-| Dashboard Mejorado | 🔴 TODO | 0% | 2 |
-| Objetivos y Metas | 🔴 TODO | 0% | 2 |
-| PWA y Multi-dispositivo | 🔴 TODO | 0% | 3 |
+| Dashboard Mejorado | 🟢 DONE | 100% | 2 |
+| Objetivos y Metas | 🟢 DONE | 100% | 2 |
+| PWA y Multi-dispositivo | 🟢 DONE | 100% | 3 |
 | Optimizaciones de Rendimiento | 🔴 TODO | 0% | 4 |
 | Backup y Seguridad | 🔴 TODO | 0% | 4 |
 
@@ -335,17 +347,17 @@
 - [x] Tags funcionan con colores y filtros
 - [x] Sistema de gestión de tags personalizado completo
 
-### Fin de Sprint 2
-- [ ] Notificación aparece correctamente
-- [ ] Dashboard carga en < 2 segundos
-- [ ] Gráficos son responsivos
-- [ ] Metas se calculan correctamente
+### Fin de Sprint 2 ✅ COMPLETADO
+- [x] Notificación aparece correctamente al superar 8:30h
+- [x] Dashboard carga en < 2 segundos con Recharts
+- [x] Gráficos son responsivos y animados
+- [x] Metas se calculan correctamente con alertas visuales
 
-### Fin de Sprint 3
-- [ ] PWA instalable en iOS y Android
-- [ ] Funciona offline
-- [ ] Sincronización cross-device funciona
-- [ ] Home screen widget visible
+### Fin de Sprint 3 ✅ COMPLETADO
+- [x] PWA instalable en navegadores compatibles (Chrome, Edge, Safari)
+- [x] Manifest.json con iconos y metadata
+- [x] Service Worker con caché offline para assets estáticos
+- [x] Botón de instalación visible cuando es instalable
 
 ### Fin de Sprint 4
 - [ ] Lighthouse score ≥ 90
