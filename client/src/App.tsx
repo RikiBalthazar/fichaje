@@ -220,13 +220,6 @@ function App() {
     // Abrir modal de descripción del proyecto activo
     setDescriptionModalProjectId(activeProjectId);
     console.log(`🎤 Abriendo modal de descripción para proyecto ${activeProjectId}`);
-    
-    setToastMessage({
-      id: Date.now().toString(),
-      message: '🎤 Modal de descripción abierto',
-      type: 'success',
-      duration: 2000
-    });
   };
 
   const handlePauseProject = async () => {
