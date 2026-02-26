@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Project, DescriptionTemplate } from '../types';
 import { formatSeconds, formatSecondsHHMM, convertSecondsToCentesimal } from '../utils/time';
 import { useSpeechRecognition } from '../hooks';
@@ -29,7 +29,7 @@ interface ProjectCardProps {
   todayMinutes?: number; // Minutos trabajados hoy en este proyecto
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({
+const ProjectCardComponent: React.FC<ProjectCardProps> = ({
   project,
   isActive,
   isPaused,
@@ -547,3 +547,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     </>
   );
 };
+
+// Memoize ProjectCard to prevent unnecessary re-renders
+export const ProjectCard = memo(ProjectCardComponent);

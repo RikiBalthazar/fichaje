@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
 import { Project, TimeEntry, User } from './types';
 import { useTimer } from './hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -6,16 +6,18 @@ import { useWorkingHoursAlert } from './hooks/useWorkingHoursAlert';
 import { projectsAPI, timeEntriesAPI, authAPI } from './services/api';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
-import { AdminView } from './components/AdminView';
-import { ExportView } from './components/ExportView';
-import { SettingsModal } from './components/SettingsModal';
-import { DashboardModal } from './components/DashboardModal';
 import { AuthView } from './components/AuthView';
-import { AccountModal } from './components/AccountModal';
 import { KeyboardHelp } from './components/KeyboardHelp';
 import { Toast as ToastComponent, ToastMessage } from './components/Toast';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
 import { TAG_COLORS, DEFAULT_COLOR } from './components/TagInput';
+
+// Lazy load heavy modals to reduce initial bundle size
+const AdminView = lazy(() => import('./components/AdminView').then(module => ({ default: module.AdminView })));
+const ExportView = lazy(() => import('./components/ExportView').then(module => ({ default: module.ExportView })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const DashboardModal = lazy(() => import('./components/DashboardModal').then(module => ({ default: module.DashboardModal })));
+const AccountModal = lazy(() => import('./components/AccountModal').then(module => ({ default: module.AccountModal })));
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -173,7 +175,7 @@ function App() {
   };
 
   // Sort projects: Favorites → Recent → Rest
-  const sortProjects = (projectsList: Project[]): Project[] => {
+  const sortProjects = useCallback((projectsList: Project[]): Project[] => {
     return [...projectsList].sort((a, b) => {
       // 1. Favorites first
       if (a.isFavorite !== b.isFavorite) {
@@ -190,7 +192,7 @@ function App() {
       // 3. Finally alphabetically
       return a.name.localeCompare(b.name);
     });
-  };
+  }, []);
 
   // Handle toggle favorite
   const handleToggleFavorite = async (projectId: string) => {
@@ -245,6 +247,11 @@ function App() {
     });
     return Array.from(tagsSet).sort();
   }, [projects]);
+
+  // Memoize sorted projects to avoid re-sorting on every render
+  const sortedProjects = useMemo(() => {
+    return sortProjects(filteredProjects);
+  }, [filteredProjects, sortProjects]);
 
   // Handle search
   const handleSearch = (query: string) => {
@@ -862,7 +869,7 @@ function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortProjects(filteredProjects).map((project) => {
+            {sortedProjects.map((project) => {
               const todayMinutesByProject = getTodayMinutesByProject();
               return (
                 <ProjectCard
@@ -905,37 +912,39 @@ function App() {
         onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
       />
 
-      <AdminView
-        isOpen={showAdminView}
-        onClose={() => setShowAdminView(false)}
-        entries={entries}
-        projects={projects}
-        onEdit={async (entry) => {
-          try {
-            await timeEntriesAPI.update(entry.id, {
-              description: entry.description,
-              duration: entry.duration,
-              durationCentesimal: entry.durationCentesimal,
-            });
-            await loadEntries();
-            showToast('Registro actualizado', 'success');
-          } catch (error) {
-            showToast('Error al actualizar registro', 'error');
-          }
-        }}
-        onDelete={async (entryId) => {
-          try {
-            await timeEntriesAPI.delete(entryId);
-            await loadEntries();
-            showToast('Registro eliminado', 'success');
-          } catch (error) {
-            showToast('Error al eliminar registro', 'error');
-          }
-        }}
-        onProjectsChange={async () => {
-          await loadProjects();
-        }}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <AdminView
+          isOpen={showAdminView}
+          onClose={() => setShowAdminView(false)}
+          entries={entries}
+          projects={projects}
+          onEdit={async (entry) => {
+            try {
+              await timeEntriesAPI.update(entry.id, {
+                description: entry.description,
+                duration: entry.duration,
+                durationCentesimal: entry.durationCentesimal,
+              });
+              await loadEntries();
+              showToast('Registro actualizado', 'success');
+            } catch (error) {
+              showToast('Error al actualizar registro', 'error');
+            }
+          }}
+          onDelete={async (entryId) => {
+            try {
+              await timeEntriesAPI.delete(entryId);
+              await loadEntries();
+              showToast('Registro eliminado', 'success');
+            } catch (error) {
+              showToast('Error al eliminar registro', 'error');
+            }
+          }}
+          onProjectsChange={async () => {
+            await loadProjects();
+          }}
+        />
+      </Suspense>
 
       <Modal
         isOpen={showProjectManager}
@@ -1048,35 +1057,43 @@ function App() {
         />
       )}
 
-      <ExportView
-        isOpen={showExportView}
-        onClose={() => setShowExportView(false)}
-        entries={entries}
-        projects={projects}
-        onExportSuccess={() => showToast('Archivo exportado correctamente', 'success')}
-        onExportError={(error) => showToast(error, 'error')}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <ExportView
+          isOpen={showExportView}
+          onClose={() => setShowExportView(false)}
+          entries={entries}
+          projects={projects}
+          onExportSuccess={() => showToast('Archivo exportado correctamente', 'success')}
+          onExportError={(error) => showToast(error, 'error')}
+        />
+      </Suspense>
 
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      </Suspense>
 
-      <DashboardModal
-        isOpen={showDashboard}
-        onClose={() => setShowDashboard(false)}
-        entries={entries}
-        projects={projects}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <DashboardModal
+          isOpen={showDashboard}
+          onClose={() => setShowDashboard(false)}
+          entries={entries}
+          projects={projects}
+        />
+      </Suspense>
 
       {user && (
-        <AccountModal
-          isOpen={showAccount}
-          onClose={() => setShowAccount(false)}
-          user={user}
-          onLogout={handleLogout}
-          onPasswordChanged={() => showToast('Contrasena actualizada', 'success')}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <AccountModal
+            isOpen={showAccount}
+            onClose={() => setShowAccount(false)}
+            user={user}
+            onLogout={handleLogout}
+            onPasswordChanged={() => showToast('Contrasena actualizada', 'success')}
+          />
+        </Suspense>
       )}
 
       {/* Toast Notification */}
