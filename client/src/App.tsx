@@ -17,6 +17,11 @@ import { Toast as ToastComponent, ToastMessage } from './components/Toast';
 import { Toast, ConfirmDialog, LoadingSpinner, Modal } from './components/ui';
 import { TAG_COLORS, DEFAULT_COLOR } from './components/TagInput';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 function App() {
   // Estado de proyectos
   const [projects, setProjects] = useState<Project[]>([]);
@@ -42,6 +47,10 @@ function App() {
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+
+  // PWA install prompt
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   // Toast notifications
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
@@ -84,6 +93,27 @@ function App() {
     };
 
     initAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+      setCanInstall(true);
+    };
+
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      setCanInstall(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   // Cargar proyectos al autenticar
@@ -450,6 +480,18 @@ function App() {
     setShowExportView(true);
   };
 
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    setInstallPrompt(null);
+    setCanInstall(false);
+    showToast(
+      choice.outcome === 'accepted' ? 'App instalada correctamente' : 'Instalacion cancelada',
+      choice.outcome === 'accepted' ? 'success' : 'info'
+    );
+  };
+
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setToast({ message, type });
   };
@@ -582,6 +624,14 @@ function App() {
               >
                 📊 Dashboard
               </button>
+              {canInstall && (
+                <button
+                  onClick={handleInstallApp}
+                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold transition text-sm"
+                >
+                  ⬇️ Instalar
+                </button>
+              )}
               <button
                 onClick={handleExportTxt}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition text-sm"
@@ -681,6 +731,17 @@ function App() {
               >
                 📊 Dashboard
               </button>
+              {canInstall && (
+                <button
+                  onClick={() => {
+                    handleInstallApp();
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold text-sm"
+                >
+                  ⬇️ Instalar
+                </button>
+              )}
               <button
                 onClick={() => {
                   handleExportTxt();
